@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, PlusCircle, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
-
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8001').replace(/\/+$/, '');
+import { API_URL } from '../api/config';
 
 export default function AddCallModal({
   isOpen,
@@ -120,8 +119,9 @@ export default function AddCallModal({
       );
 
       setErrorMessage(
-        err.message ||
-        'Error saving call record to backend'
+        err.message && !err.message.includes('HTTP')
+          ? err.message
+          : 'Unable to save call record right now. Please try again.'
       );
     } finally {
       setSubmitting(false);

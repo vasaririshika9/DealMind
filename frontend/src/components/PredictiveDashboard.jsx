@@ -73,7 +73,7 @@ export default function PredictiveDashboard({
     const loadBenchmarks = async () => {
       try {
         const [bRes, mRes] = await Promise.all([
-          fetch(`${apiUrl}/business-insights`),
+          fetch(`${apiUrl}/dataset-insights`),
           fetch(`${apiUrl}/model-metrics`),
         ]);
         if (bRes.ok) {
@@ -140,44 +140,30 @@ export default function PredictiveDashboard({
     );
   }
 
-  const {
-    deal_health = 'Healthy Deal',
-    headline = 'Likely to move forward',
-    forecast_summary = 'Likely to move forward',
-    chance_moving_forward = '82%',
-    chance_losing = '18%',
-    risk_level = 'Low',
-    risk_score = 18,
-    customer_interest = 'Improving ↑',
-    likely_next_step = 'Negotiation',
-    next_step_probability = '78%',
-    next_step_likelihood = '78% likelihood',
-    positive_signals = [
-      '✓ Customer interest is improving',
-      '✓ Decision maker is involved',
-      '✓ Demo is complete',
-    ],
-    warning_signs = [
-      '⚠ Pricing concern remains unresolved',
-    ],
-    why = [
-      'Customer interest is improving',
-      'Decision maker is involved',
-      'Demo is complete',
-    ],
-    concerns = [
-      'Pricing concern remains unresolved',
-    ],
-    what_to_do_next = 'Address the pricing concern using the ROI approach that worked previously.',
-    next_action = 'Address the pricing concern using the ROI approach that worked previously.',
-    progress_probability = 0.82,
-    loss_probability = 0.18,
-    groq_brief = null,
-    explainer_used = 'SHAP LinearExplainer',
-    judge_shap_details = [],
-  } = data;
+  const deal_health = data.deal_health || (data.progress_probability >= 0.65 ? 'Healthy Deal' : (data.progress_probability >= 0.45 ? 'Needs Attention' : 'At Risk'));
+  const headline = data.headline || data.forecast_summary || (data.prediction === 'Progressed' ? 'Likely to move forward' : 'At risk of stalling or loss');
+  const forecast_summary = data.forecast_summary || headline;
+  const chance_moving_forward = data.chance_moving_forward || (data.progress_probability !== undefined ? `${Math.round(data.progress_probability * 100)}%` : '—');
+  const chance_losing = data.chance_losing || (data.loss_probability !== undefined ? `${Math.round(data.loss_probability * 100)}%` : (data.progress_probability !== undefined ? `${100 - Math.round(data.progress_probability * 100)}%` : '—'));
+  const risk_level = data.risk_level || 'Medium';
+  const risk_score = data.risk_score !== undefined ? data.risk_score : 50;
+  const customer_interest = data.customer_interest || 'Steady →';
+  const likely_next_step = data.likely_next_step || data.predicted_next_stage || 'Evaluation';
+  const next_step_probability = data.next_step_probability || (data.next_stage_confidence !== undefined ? `${Math.round(data.next_stage_confidence * 100)}%` : '');
+  const next_step_likelihood = data.next_step_likelihood || (next_step_probability ? `${next_step_probability} likelihood` : '');
+  const positive_signals = data.positive_signals || (data.why ? data.why.map((w) => `✓ ${w}`) : []);
+  const warning_signs = data.warning_signs || (data.concerns ? data.concerns.map((c) => `⚠ ${c}`) : []);
+  const why = data.why || [];
+  const concerns = data.concerns || [];
+  const what_to_do_next = data.what_to_do_next || data.recommended_action || data.next_action || 'Review customer requirements and schedule follow-up.';
+  const next_action = data.next_action || what_to_do_next;
+  const progress_probability = data.progress_probability !== undefined ? data.progress_probability : 0.5;
+  const loss_probability = data.loss_probability !== undefined ? data.loss_probability : 0.5;
+  const groq_brief = data.groq_brief || null;
+  const explainer_used = data.explainer_used || 'SHAP LinearExplainer';
+  const judge_shap_details = data.judge_shap_details || [];
 
-  const progNum = Math.round((progress_probability || 0.82) * 100);
+  const progNum = data.progress_probability !== undefined ? Math.round(data.progress_probability * 100) : (parseInt(chance_moving_forward) || 50);
   const isHealthy = deal_health === 'Healthy Deal';
   const isAttention = deal_health === 'Needs Attention';
 

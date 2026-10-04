@@ -15,28 +15,36 @@ export default function ModelPerformance({ apiUrl }) {
   const [metricsData, setMetricsData] = useState(null);
   const [featuresData, setFeaturesData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchMLData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [mRes, fRes] = await Promise.all([
+        fetch(`${apiUrl}/model-metrics`),
+        fetch(`${apiUrl}/feature-importance`),
+      ]);
+      if (mRes.ok) {
+        const mJson = await mRes.json();
+        setMetricsData(mJson);
+      }
+      if (fRes.ok) {
+        const fJson = await fRes.json();
+        setFeaturesData(fJson.top_features || []);
+      }
+      if (!mRes.ok && !fRes.ok) {
+        throw new Error('Failed to load ML metrics');
+      }
+    } catch (e) {
+      console.error('Failed to load ML metrics:', e);
+      setError('Unable to connect to DealSight server. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchMLData = async () => {
-      try {
-        const [mRes, fRes] = await Promise.all([
-          fetch(`${apiUrl}/model-metrics`),
-          fetch(`${apiUrl}/feature-importance`),
-        ]);
-        if (mRes.ok) {
-          const mJson = await mRes.json();
-          setMetricsData(mJson);
-        }
-        if (fRes.ok) {
-          const fJson = await fRes.json();
-          setFeaturesData(fJson.top_features || []);
-        }
-      } catch (e) {
-        console.error('Failed to load ML metrics:', e);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchMLData();
   }, [apiUrl]);
 
@@ -44,7 +52,22 @@ export default function ModelPerformance({ apiUrl }) {
     return (
       <div className="p-8 text-center text-[var(--color-cream)]">
         <Zap className="w-8 h-8 mx-auto animate-bounce mb-3 text-[var(--color-cream)]" />
-        <p>Loading Model Evaluation & Comparison Metrics...</p>
+        <p>Connecting to DealSight... Loading Model Evaluation & Comparison Metrics...</p>
+      </div>
+    );
+  }
+
+  if (error && !metricsData) {
+    return (
+      <div className="p-8 text-center text-[var(--color-cream)] bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl">
+        <ShieldAlert className="w-8 h-8 mx-auto text-[var(--status-danger)] mb-3" />
+        <p className="font-bold text-sm mb-4">{error}</p>
+        <button
+          onClick={fetchMLData}
+          className="px-4 py-2 bg-[var(--color-cream)]/10 hover:bg-[var(--color-cream)]/20 border border-[var(--border-secondary)] rounded-xl text-xs font-bold transition-all text-[var(--color-cream)]"
+        >
+          Retry Connection
+        </button>
       </div>
     );
   }
@@ -69,8 +92,13 @@ export default function ModelPerformance({ apiUrl }) {
               {bestModel} (Calibrated Pipeline)
             </h2>
             <p className="text-xs text-[var(--color-green-light)] mt-1 max-w-2xl">
-              Selected using stratified 70/15/15 validation across 2,500 historical deals.
-              Optimized for high <strong>ROC-AUC (0.952)</strong> and maximized <strong>Recall on Lost Deals (86.5%)</strong> to stop pipeline slippage.
+              Selected using stratified validation across historical deals.
+              {bestMetrics.roc_auc && (
+                <> Optimized for high <strong>ROC-AUC ({(bestMetrics.roc_auc).toFixed(3)})</strong></>
+              )}
+              {bestMetrics.recall_lost && (
+                <> and maximized <strong>Recall on Lost Deals ({(bestMetrics.recall_lost * 100).toFixed(1)}%)</strong> to stop pipeline slippage.</>
+              )}
             </p>
           </div>
 
@@ -78,19 +106,19 @@ export default function ModelPerformance({ apiUrl }) {
             <div className="kpi-mini">
               <span className="text-[10px] uppercase font-bold text-[var(--color-green-muted)]">ROC-AUC</span>
               <span className="text-xl font-extrabold text-[var(--color-cream)]">
-                {bestMetrics.roc_auc ? (bestMetrics.roc_auc * 100).toFixed(1) + '%' : '95.2%'}
+                {bestMetrics.roc_auc ? (bestMetrics.roc_auc * 100).toFixed(1) + '%' : '—'}
               </span>
             </div>
             <div className="kpi-mini">
               <span className="text-[10px] uppercase font-bold text-[var(--color-green-muted)]">Accuracy</span>
               <span className="text-xl font-extrabold text-[var(--color-cream)]">
-                {bestMetrics.accuracy ? (bestMetrics.accuracy * 100).toFixed(1) + '%' : '85.6%'}
+                {bestMetrics.accuracy ? (bestMetrics.accuracy * 100).toFixed(1) + '%' : '—'}
               </span>
             </div>
             <div className="kpi-mini highlight">
               <span className="text-[10px] uppercase font-bold text-[var(--status-success)]">Recall (Lost)</span>
               <span className="text-xl font-extrabold text-[var(--status-success)]">
-                {bestMetrics.recall_lost ? (bestMetrics.recall_lost * 100).toFixed(1) + '%' : '86.5%'}
+                {bestMetrics.recall_lost ? (bestMetrics.recall_lost * 100).toFixed(1) + '%' : '—'}
               </span>
             </div>
           </div>
@@ -173,22 +201,22 @@ export default function ModelPerformance({ apiUrl }) {
           <div className="cm-grid">
             <div className="cm-cell true-neg">
               <span className="cm-label">True Negatives (Lost)</span>
-              <span className="cm-val">{cm.true_negatives_lost || 198}</span>
+              <span className="cm-val">{cm.correctly_identified_lost_deals ?? cm.true_negatives_lost ?? '—'}</span>
               <span className="cm-sub">Correctly caught deal risks</span>
             </div>
             <div className="cm-cell false-pos">
               <span className="cm-label">False Positives (False Alarm)</span>
-              <span className="cm-val">{cm.false_positives_predicted_progressed_but_lost || 31}</span>
+              <span className="cm-val">{cm.incorrectly_identified_progressing_deals ?? cm.false_positives_predicted_progressed_but_lost ?? '—'}</span>
               <span className="cm-sub">Flagged safe but slipped</span>
             </div>
             <div className="cm-cell false-neg">
               <span className="cm-label">False Negatives (Missed)</span>
-              <span className="cm-val">{cm.false_negatives_predicted_lost_but_progressed || 23}</span>
+              <span className="cm-val">{cm.missed_lost_deals ?? cm.false_negatives_predicted_lost_but_progressed ?? '—'}</span>
               <span className="cm-sub">Flagged risky but won</span>
             </div>
             <div className="cm-cell true-pos">
               <span className="cm-label">True Positives (Progressed)</span>
-              <span className="cm-val">{cm.true_positives_progressed || 123}</span>
+              <span className="cm-val">{cm.correctly_identified_progressing_deals ?? cm.true_positives_progressed ?? '—'}</span>
               <span className="cm-sub">Accurately predicted progression</span>
             </div>
           </div>

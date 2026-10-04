@@ -20,28 +20,33 @@ export default function DatasetDashboard({ apiUrl }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchInsights = async () => {
-      try {
-        const res = await fetch(`${apiUrl}/dataset-insights`);
-        if (res.ok) {
-          const json = await res.json();
-          setData(json);
+  const fetchInsights = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${apiUrl}/dataset-insights`);
+      if (res.ok) {
+        const json = await res.json();
+        setData(json);
+      } else {
+        // Fallback to /business-insights if supported
+        const altRes = await fetch(`${apiUrl}/business-insights`);
+        if (altRes.ok) {
+          const altJson = await altRes.json();
+          setData(altJson);
         } else {
-          // Fallback to /business-insights
-          const altRes = await fetch(`${apiUrl}/business-insights`);
-          if (altRes.ok) {
-            const altJson = await altRes.json();
-            setData(altJson);
-          }
+          throw new Error('Failed to load dataset insights');
         }
-      } catch (err) {
-        console.error('Failed to load dataset insights:', err);
-        setError('Could not load historical dataset statistics.');
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (err) {
+      console.error('Failed to load dataset insights:', err);
+      setError('Unable to connect to DealSight server. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchInsights();
   }, [apiUrl]);
 
@@ -49,18 +54,35 @@ export default function DatasetDashboard({ apiUrl }) {
     return (
       <div className="p-12 text-center text-[var(--color-cream)]">
         <Database className="w-8 h-8 mx-auto animate-pulse mb-3 text-[var(--color-cream)]" />
-        <p>Loading historical sales dataset analytics...</p>
+        <p>Connecting to DealSight... Loading historical sales dataset analytics...</p>
+      </div>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <div className="p-12 text-center text-[var(--color-cream)] bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl">
+        <AlertTriangle className="w-8 h-8 mx-auto text-[var(--status-danger)] mb-3" />
+        <p className="font-bold text-sm mb-4">{error}</p>
+        <button
+          onClick={fetchInsights}
+          className="px-4 py-2 bg-[var(--color-cream)]/10 hover:bg-[var(--color-cream)]/20 border border-[var(--border-secondary)] rounded-xl text-xs font-bold transition-all text-[var(--color-cream)]"
+        >
+          Retry Connection
+        </button>
       </div>
     );
   }
 
   const summary = data?.summary || {
-    total_deals_text: '2,500 Deals',
-    progressed_label: '39% Progressed',
-    lost_label: '61% Lost',
-    avg_calls_text: '7.6 calls/deal',
-    avg_objections_text: '1.0 objections/deal',
-    avg_followups_text: '5.0 follow-ups/deal',
+    total_deals_text: '—',
+    progressed_label: '—',
+    lost_label: '—',
+    progressed_pct: '—',
+    lost_pct: '—',
+    avg_calls_text: '—',
+    avg_objections_text: '—',
+    avg_followups_text: '—',
   };
 
   const charts = data?.charts || {};

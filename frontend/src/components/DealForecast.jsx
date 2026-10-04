@@ -2,19 +2,19 @@ import React from 'react';
 import { TrendingUp, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export default function DealForecast({
-  prediction = 'Progressed',
-  chanceMovingForward = '82%',
-  chanceLosing = '18%',
-  dealHealth = 'Healthy Deal',
-  riskLevel = 'Low',
-  riskScore = 18,
-  likelyNextStep = 'Negotiation',
-  nextStepProbability = '78%',
-  customerInterest = 'Improving ↑',
+  prediction = '',
+  chanceMovingForward = '—',
+  chanceLosing = '—',
+  dealHealth = 'Needs Attention',
+  riskLevel = 'Medium',
+  riskScore = 50,
+  likelyNextStep = 'Evaluation',
+  nextStepProbability = '',
+  customerInterest = 'Steady →',
 }) {
   const isHealthy = dealHealth === 'Healthy Deal';
   const isAttention = dealHealth === 'Needs Attention';
-  const progPct = parseInt(chanceMovingForward) || 82;
+  const progPct = parseInt(chanceMovingForward) || 0;
 
   return (
     <div className="bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-2xl p-5 shadow-lg space-y-4">

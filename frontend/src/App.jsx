@@ -21,8 +21,7 @@ import {
   Sliders,
   Database,
 } from 'lucide-react';
-
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8001').replace(/\/+$/, '');
+import { API_URL } from './api/config';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('brief'); // 'brief' | 'predictive' | 'models'
@@ -130,16 +129,16 @@ export default function App() {
         `[FRONTEND] Fetching brief for '${customerName}' call #${selectedCallNumber} from ${targetUrl}...`
       );
 
-      // 25-second frontend timeout
+      // 45-second timeout for Render cold-starts
       const controller = new AbortController();
 
       const timeoutId = setTimeout(() => {
         console.warn(
-          `[FRONTEND TIMEOUT] 25s timeout triggered for '${customerName}' call #${selectedCallNumber}`
+          `[FRONTEND TIMEOUT] 45s timeout triggered for '${customerName}' call #${selectedCallNumber}`
         );
 
         controller.abort();
-      }, 25000);
+      }, 45000);
 
       try {
         const response = await fetch(targetUrl, {
@@ -150,11 +149,10 @@ export default function App() {
 
         if (!response.ok) {
           const errorJson = await response.json().catch(() => ({}));
-
           const message =
             errorJson.detail ||
             errorJson.error ||
-            `HTTP ${response.status}: Failed to generate brief — check backend logs`;
+            'Unable to generate the brief right now. Please try again.';
 
           console.error(
             `[FRONTEND ERROR] Server returned HTTP ${response.status}:`,
@@ -199,11 +197,11 @@ export default function App() {
 
         if (err.name === 'AbortError') {
           console.error(
-            `[FRONTEND ERROR] Request timed out after 25s for '${customerName}' call #${selectedCallNumber}`
+            `[FRONTEND ERROR] Request timed out for '${customerName}' call #${selectedCallNumber}`
           );
 
           setError(
-            'Failed to generate brief — request timed out after 25s. Check backend logs.'
+            'Unable to connect to DealSight server. The backend may be waking up from sleep. Please try again.'
           );
         } else {
           console.error(
@@ -212,8 +210,9 @@ export default function App() {
           );
 
           setError(
-            err.message ||
-            'Failed to generate brief — check backend logs'
+            err.message && !err.message.includes('HTTP')
+              ? err.message
+              : 'Unable to connect to DealSight server. Please try again.'
           );
         }
       } finally {
@@ -249,11 +248,11 @@ export default function App() {
 
     const timeoutId = setTimeout(() => {
       console.warn(
-        `[FRONTEND TIMEOUT] 25s timeout triggered for '${cName}' call #${cNum}`
+        `[FRONTEND TIMEOUT] 45s timeout triggered for '${cName}' call #${cNum}`
       );
 
       controller.abort();
-    }, 25000);
+    }, 45000);
 
     try {
       const response = await fetch(targetUrl, {
@@ -264,11 +263,10 @@ export default function App() {
 
       if (!response.ok) {
         const errorJson = await response.json().catch(() => ({}));
-
         const message =
           errorJson.detail ||
           errorJson.error ||
-          `HTTP ${response.status}: Failed to generate brief — check backend logs`;
+          'Unable to generate the brief right now. Please try again.';
 
         console.error(
           `[FRONTEND ERROR] Server returned HTTP ${response.status}:`,
@@ -308,11 +306,11 @@ export default function App() {
 
       if (err.name === 'AbortError') {
         console.error(
-          `[FRONTEND ERROR] Request timed out after 25s for '${cName}' call #${cNum}`
+          `[FRONTEND ERROR] Request timed out for '${cName}' call #${cNum}`
         );
 
         setError(
-          'Failed to generate brief — request timed out after 25s. Check backend logs.'
+          'Unable to connect to DealSight server. The backend may be waking up from sleep. Please try again.'
         );
       } else {
         console.error(
@@ -321,8 +319,9 @@ export default function App() {
         );
 
         setError(
-          err.message ||
-          'Failed to generate brief — check backend logs'
+          err.message && !err.message.includes('HTTP')
+            ? err.message
+            : 'Unable to connect to DealSight server. Please try again.'
         );
       }
     } finally {
