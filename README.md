@@ -194,6 +194,7 @@ DealMind/
 │   │   └── model_results.json      # Dynamic benchmark results
 │   └── test_hindsight.py          # Standalone Hindsight connectivity test
 │
+
 ├── frontend/
 │   ├── index.html                  # HTML entry point with metadata
 │   ├── package.json                # Frontend dependencies and npm scripts
