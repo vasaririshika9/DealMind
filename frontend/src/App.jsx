@@ -21,7 +21,7 @@ import {
   Sliders,
   Database,
 } from 'lucide-react';
-import { API_URL } from './api/config';
+import { API_URL } from './services/api';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('brief'); // 'brief' | 'predictive' | 'models'

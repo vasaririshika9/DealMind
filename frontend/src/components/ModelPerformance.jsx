@@ -9,9 +9,10 @@ import {
   Zap,
   TrendingUp,
 } from 'lucide-react';
+import { API_URL } from '../services/api';
 import './ModelPerformance.css';
 
-export default function ModelPerformance({ apiUrl }) {
+export default function ModelPerformance({ apiUrl = API_URL }) {
   const [metricsData, setMetricsData] = useState(null);
   const [featuresData, setFeaturesData] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -28,13 +28,14 @@ import {
 import DealForecast from './DealForecast';
 import PredictionReasons from './PredictionReasons';
 import RecommendedAction from './RecommendedAction';
+import { API_URL } from '../services/api';
 import './PredictiveDashboard.css';
 
 export default function PredictiveDashboard({
   prediction,
   customerName,
   companyName,
-  apiUrl,
+  apiUrl = API_URL,
 }) {
   // Mode: 'active_deal' | 'simulator'
   const [activeMode, setActiveMode] = useState('active_deal');

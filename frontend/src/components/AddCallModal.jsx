@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, PlusCircle, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
-import { API_URL } from '../api/config';
+import { API_URL } from '../services/api';
 
 export default function AddCallModal({
   isOpen,

@@ -13,9 +13,10 @@ import {
   BarChart3,
   Flame,
 } from 'lucide-react';
+import { API_URL } from '../services/api';
 import './DatasetDashboard.css';
 
-export default function DatasetDashboard({ apiUrl }) {
+export default function DatasetDashboard({ apiUrl = API_URL }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
