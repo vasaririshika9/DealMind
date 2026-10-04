@@ -1,0 +1,62 @@
+[
+  {
+    "feature": "price_objections",
+    "importance": 1.54872
+  },
+  {
+    "feature": "objection_pressure",
+    "importance": 1.45787
+  },
+  {
+    "feature": "response_delay_hours",
+    "importance": 1.13894
+  },
+  {
+    "feature": "demo_completed",
+    "importance": 1.08056
+  },
+  {
+    "feature": "days_since_last_call",
+    "importance": 0.98433
+  },
+  {
+    "feature": "sentiment_trend",
+    "importance": 0.91454
+  },
+  {
+    "feature": "stage_duration_days",
+    "importance": 0.8743
+  },
+  {
+    "feature": "decision_maker_present",
+    "importance": 0.86407
+  },
+  {
+    "feature": "budget_confirmed",
+    "importance": 0.82459
+  },
+  {
+    "feature": "engagement_score",
+    "importance": 0.76737
+  },
+  {
+    "feature": "competitor_present",
+    "importance": 0.73698
+  },
+  {
+    "feature": "proposal_age_days",
+    "importance": 0.72032
+  },
+  {
+    "feature": "objection_resolution_rate",
+    "importance": 0.71618
+  },
+  {
+    "feature": "next_action_completed",
+    "importance": 0.6804
+  },
+  {
+    "feature": "timeline_confirmed",
+    "importance": 0.61283
+  }
+]

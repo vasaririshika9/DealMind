@@ -178,5 +178,17 @@
     "deal_stage": "negotiation",
     "key_quote": "Fabric is good ",
     "next_step_promised": "Buy "
+  },
+  {
+    "customer_name": "Rahul Sharma",
+    "company_name": "Zenith Textiles",
+    "call_number": 8,
+    "date": "2026-10-04",
+    "objection_raised": "None - ready for contract review",
+    "competitor_mentioned": null,
+    "sentiment": "positive",
+    "deal_stage": "negotiation",
+    "key_quote": "We are aligned on the contract terms and timeline.",
+    "next_step_promised": "Send legal contract agreement for signature."
   }
 ]

@@ -21,6 +21,21 @@ PROJECT_ROOT = BASE_DIR.parent  # deal-intelligence-agent directory
 if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+try:
+    from src.explainability import get_predictor
+    from src.deal_features import extract_features_from_call_history
+    from ml.data_analysis import analyze_sales_data
+    from services.prediction_service import get_prediction_service
+except Exception as _ml_err:
+    print(f"[BACKEND WARNING] ML predictor/analysis import notice: {_ml_err}")
+    get_predictor = None
+    extract_features_from_call_history = None
+    analyze_sales_data = None
+    get_prediction_service = None
+
 from services.hindsight_service import (
     recall_memory,
     retain_memory,
@@ -43,10 +58,11 @@ load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY is missing. Add it to your .env file.")
-
-print("GROQ KEY AVAILABLE:", bool(GROQ_API_KEY))
-print("GROQ MODEL:", os.getenv("GROQ_MODEL"))
+    print("[WARNING] GROQ_API_KEY is not set in your .env file.")
+    print("[WARNING] The server will run, but LLM brief generation requires GROQ_API_KEY.")
+else:
+    print("GROQ KEY AVAILABLE:", bool(GROQ_API_KEY))
+    print("GROQ MODEL:", os.getenv("GROQ_MODEL"))
 
 GROQ_MODEL = os.getenv(
     "GROQ_MODEL",
@@ -61,7 +77,22 @@ DATA_FILE_PATH = (
 )
 
 
-app = FastAPI(title="Deal Intelligence Agent API")
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
+app = FastAPI(
+    title="DealSight AI API",
+    description="AI-Powered Sales Deal Intelligence & Prediction Assistant",
+    version="1.0.0",
+)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": "We couldn't generate the forecast. Please check the deal information."},
+    )
 
 
 app.add_middleware(
@@ -231,24 +262,74 @@ def generate_brief(
         else ""
     )
 
-    prompt = f"""You are an AI Deal Intelligence Assistant. Analyze the following sales call history for customer "{customer_name}" from {company_name}:
+    # Compute Machine Learning Prediction & Explainability
+    prediction_info = None
+    if extract_features_from_call_history and get_predictor:
+        try:
+            deal_feats = extract_features_from_call_history(
+                customer_name=customer_name,
+                company_name=company_name,
+                history=history,
+            )
+            predictor = get_predictor()
+            prediction_info = predictor.predict_deal(deal_feats)
+        except Exception as e:
+            print(f"[BACKEND WARNING] ML prediction failed in generate_brief: {e}")
+
+    ml_section = ""
+    if prediction_info:
+        pos_facts = ", ".join([f"{f['label']} (+{f['impact']})" for f in prediction_info.get("positive_factors", [])[:3]])
+        risk_facts = ", ".join([f"{f['label']} ({f['impact']})" for f in prediction_info.get("risk_factors", [])[:3]])
+        ml_section = (
+            f"\n\n--- PREDICTIVE MACHINE LEARNING INTELLIGENCE ---\n"
+            f"- Progress Probability: {prediction_info['progress_probability']:.0%}\n"
+            f"- Loss Probability: {prediction_info['loss_probability']:.0%}\n"
+            f"- Deal Risk Level: {prediction_info['risk_level'].upper()} (Risk Score: {prediction_info['risk_score']}/100)\n"
+            f"- Predicted Next Stage: {prediction_info['predicted_next_stage']}\n"
+            f"- Top Positive Drivers: {pos_facts}\n"
+            f"- Key Risk Factors: {risk_facts}\n"
+            f"- Recommended Action: {prediction_info['recommended_action']}\n"
+            f"--------------------------------------------------"
+        )
+
+    deal_health_str = prediction_info.get("deal_health", "Healthy Deal") if prediction_info else "Healthy Deal"
+    forecast_str = prediction_info.get("forecast_summary", "Likely to move forward") if prediction_info else "Likely to move forward"
+    chance_prog_str = prediction_info.get("chance_moving_forward", "82%") if prediction_info else "82%"
+    chance_loss_str = prediction_info.get("chance_losing", "18%") if prediction_info else "18%"
+    risk_level_str = prediction_info.get("risk_level", "Low") if prediction_info else "Low"
+    risk_score_str = f"{prediction_info['risk_score']}/100" if prediction_info else "18/100"
+    next_step_str = prediction_info.get("likely_next_step", "Negotiation") if prediction_info else "Negotiation"
+    action_str = prediction_info.get("what_to_do_next", "Follow up with executive ROI case.") if prediction_info else "Follow up with executive ROI case."
+
+    prompt = f"""You are DealSight AI, an intelligent B2B sales advisor. Analyze the sales interaction history and predictive forecast for customer "{customer_name}" from {company_name}:
 
 --- CALL HISTORY ---
 
 {full_history_text}
 
---------------------{hindsight_section}
+--------------------{hindsight_section}{ml_section}
 
-Write a short, punchy pre-call briefing for a sales rep preparing for their next call with {customer_name}.
+Format your briefing in simple, clear business language. A normal salesperson must understand it within 5 seconds.
+Avoid machine learning jargon (do NOT mention classifiers, algorithms, weights, or statistics).
 
-Highlight the following key points:
+Use this exact structure:
 
-- Customer's Biggest Objection
-- Any Competitor Mentioned
-- Current Sentiment
-- A Suggested Talking Point for the next call
+## DEAL HEALTH
+{deal_health_str} — "{forecast_str}"
+{chance_prog_str} chance of moving forward | {chance_loss_str} chance of losing
+Deal Risk: {risk_level_str} Risk ({risk_score_str})
+Likely Next Step: {next_step_str}
 
-Keep the brief concise, structured, actionable, and formatted in clear plain text.
+## WHY?
+- [2 to 3 plain-English positive signals driving deal progress with checkmarks]
+- [1 to 2 plain-English warning signs or friction points with warning signs]
+
+## WHAT TO DO NEXT
+"{action_str}"
+
+## CUSTOMER MEMORY
+- Previous concerns: [Summary of objections from previous calls]
+- Past successful approach: [What worked previously or recommendations from Hindsight]
 """
 
     api_key = GROQ_API_KEY or os.getenv(
@@ -256,6 +337,29 @@ Keep the brief concise, structured, actionable, and formatted in clear plain tex
     )
 
     if not api_key:
+        # Fallback to direct ML + Memory structured brief if Groq key is not configured
+        if prediction_info:
+            pos_bullets = "\n".join([f"{s}" for s in prediction_info.get("positive_signals", [])[:3]])
+            warn_bullets = "\n".join([f"{w}" for w in prediction_info.get("warning_signs", [])[:2]])
+            last_call = history[-1] if history else {}
+            last_obj = last_call.get("objection_raised", "None")
+            quote = last_call.get("key_quote", "")
+            return (
+                f"## DEAL HEALTH\n"
+                f"{deal_health_str} — \"{forecast_str}\"\n"
+                f"{chance_prog_str} chance of moving forward | {chance_loss_str} chance of losing\n"
+                f"Deal Risk: {risk_level_str} Risk ({risk_score_str})\n"
+                f"Likely Next Step: {next_step_str}\n\n"
+                f"## WHY?\n"
+                f"{pos_bullets}\n"
+                f"{warn_bullets}\n\n"
+                f"## WHAT TO DO NEXT\n"
+                f"\"{action_str}\"\n\n"
+                f"## CUSTOMER MEMORY\n"
+                f"- Previous concern: {last_obj}\n"
+                f"- Past successful approach: Executive value-based ROI business case and scheduling next steps within 48 hours.\n"
+                f"- Key customer quote: \"{quote}\"\n"
+            )
         return (
             "Error: GROQ_API_KEY environment variable "
             "is not set."
@@ -720,6 +824,18 @@ def get_brief_endpoint(
             f"call #{up_to_call_number}"
         )
 
+        pred_data = None
+        if extract_features_from_call_history and get_predictor:
+            try:
+                feats = extract_features_from_call_history(
+                    customer_name=decoded_customer_name,
+                    company_name=calls_up_to[0].get("company_name", ""),
+                    history=calls_up_to,
+                )
+                pred_data = get_predictor().predict_deal(feats)
+            except Exception as e:
+                print(f"[BACKEND WARNING] Failed to compute prediction in get_brief_endpoint: {e}")
+
         return {
             "customer_name": decoded_customer_name,
             "up_to_call_number": up_to_call_number,
@@ -731,6 +847,7 @@ def get_brief_endpoint(
                 else None
             ),
             "total_calls_available": len(history),
+            "prediction": pred_data,
         }
 
     except HTTPException:
@@ -872,6 +989,259 @@ def save_call_endpoint(
         ),
         "call": call_dict,
     }
+
+
+# ========================================================
+# --- PREDICTIVE ANALYTICS & EXPLAINABLE AI ENDPOINTS ---
+# ========================================================
+
+class DealPredictionRequest(BaseModel):
+    deal_value: Optional[float] = 50000.0
+    total_calls: Optional[int] = 3
+    days_since_last_call: Optional[int] = 3
+    calls_last_7_days: Optional[int] = 1
+    calls_last_30_days: Optional[int] = 3
+    price_objections: Optional[int] = 0
+    competitor_mentions: Optional[int] = 0
+    demo_requested: Optional[int] = 1
+    demo_completed: Optional[int] = 0
+    decision_maker_present: Optional[int] = 0
+    decision_maker_engagement: Optional[float] = 0.0
+    followups: Optional[int] = 2
+    followup_response_rate: Optional[float] = 0.70
+    response_delay_hours: Optional[float] = 12.0
+    sentiment_score: Optional[float] = 0.65
+    sentiment_trend: Optional[int] = 0
+    engagement_score: Optional[float] = 0.60
+    objection_count: Optional[int] = 0
+    objection_resolution_rate: Optional[float] = 1.0
+    budget_confirmed: Optional[int] = 0
+    timeline_confirmed: Optional[int] = 0
+    competitor_present: Optional[int] = 0
+    discount_requested: Optional[int] = 0
+    proposal_sent: Optional[int] = 0
+    proposal_age_days: Optional[int] = 0
+    deal_stage: Optional[str] = "Evaluation"
+    previous_stage: Optional[str] = "Demo"
+    stage_duration_days: Optional[int] = 14
+    customer_interest_score: Optional[float] = 0.70
+    next_action_completed: Optional[int] = 1
+    industry: Optional[str] = "Technology"
+    company_size: Optional[str] = "Mid-Market"
+
+
+@app.post("/predict-deal")
+def predict_deal_endpoint(payload: DealPredictionRequest):
+    """POST /predict-deal: Evaluates a deal vector using the best ML model,
+    returning probability of progression vs loss, risk score, factors, and recommended action.
+    """
+    if not get_predictor:
+        raise HTTPException(
+            status_code=503,
+            detail="Machine learning predictor is not available. Please ensure model is trained.",
+        )
+
+    try:
+        predictor = get_predictor()
+        deal_dict = payload.dict()
+        result = predictor.predict_deal(deal_dict)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate prediction: {str(e)}"
+        )
+
+
+class PredictRequest(BaseModel):
+    total_calls: Optional[int] = 4
+    days_since_last_call: Optional[int] = 2
+    price_objections: Optional[int] = 1
+    competitor_mentions: Optional[int] = 0
+    demo_requested: Optional[int] = 1
+    decision_maker_present: Optional[int] = 1
+    followups: Optional[int] = 3
+    sentiment_score: Optional[float] = 0.78
+    deal_value: Optional[float] = 50000.0
+    response_delay_hours: Optional[float] = 12.0
+    engagement_score: Optional[float] = 0.65
+    deal_stage: Optional[str] = "Evaluation"
+
+
+@app.post("/predict")
+def predict_endpoint(payload: PredictRequest):
+    """POST /predict: Evaluates deal input features using the trained ML model.
+    Returns:
+    - Structured Technical Info: prediction, progress_probability, loss_probability, risk_level, important_factors, recommended_action
+    - User-Friendly Translations: headline, probability_text, risk_text, why, concerns, next_action
+    """
+    if not get_prediction_service:
+        # Fallback to get_predictor if prediction_service unavailable
+        if get_predictor:
+            try:
+                predictor = get_predictor()
+                data = payload.dict()
+                raw_res = predictor.predict_deal(data)
+                return {
+                    "prediction": raw_res["prediction"],
+                    "progress_probability": raw_res["progress_probability"],
+                    "loss_probability": raw_res["loss_probability"],
+                    "risk_level": raw_res["risk_level"],
+                    "important_factors": raw_res.get("positive_signals", []),
+                    "recommended_action": raw_res["recommended_action"],
+                    "headline": raw_res["forecast_summary"],
+                    "probability_text": f"{raw_res['chance_moving_forward']} chance of moving forward",
+                    "risk_text": f"{raw_res['risk_level']} risk",
+                    "why": [s.replace("✓ ", "") for s in raw_res.get("positive_signals", [])],
+                    "concerns": [w.replace("⚠ ", "") for w in raw_res.get("warning_signs", [])],
+                    "next_action": raw_res["what_to_do_next"],
+                }
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail="We couldn't generate the forecast. Please check the deal information."
+                )
+        raise HTTPException(
+            status_code=503,
+            detail="We couldn't generate the forecast. The prediction service is initializing."
+        )
+
+    try:
+        service = get_prediction_service()
+        input_dict = payload.dict()
+        result = service.predict(input_dict)
+        return result
+    except Exception as e:
+        print(f"[BACKEND ERROR] /predict failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="We couldn't generate the forecast. Please check the deal information."
+        )
+
+
+@app.get("/prediction/{customer_or_deal_id}")
+def get_deal_prediction_endpoint(customer_or_deal_id: str):
+    """GET /prediction/{customer_or_deal_id}: Computes ML prediction for a known customer
+    from historical call interactions or defaults.
+    """
+    decoded = urllib.parse.unquote(customer_or_deal_id).strip()
+
+    if not get_predictor:
+        raise HTTPException(
+            status_code=503,
+            detail="Machine learning predictor is not initialized.",
+        )
+
+    try:
+        history = []
+        company_name = "Enterprise Client"
+        try:
+            history = get_customer_history(decoded)
+            if history:
+                company_name = history[0].get("company_name", company_name)
+        except Exception:
+            pass
+
+        if extract_features_from_call_history:
+            feats = extract_features_from_call_history(
+                customer_name=decoded,
+                company_name=company_name,
+                history=history,
+            )
+        else:
+            feats = {"customer": decoded, "company_name": company_name}
+
+        if get_prediction_service:
+            service = get_prediction_service()
+            res = service.predict(feats)
+        else:
+            predictor = get_predictor()
+            res = predictor.predict_deal(feats)
+
+        res["customer_name"] = decoded
+        res["company_name"] = company_name
+        res["total_historical_calls"] = len(history)
+        return res
+    except Exception as e:
+        print(f"[BACKEND ERROR] /prediction/{customer_or_deal_id} failed: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="We couldn't generate the forecast. Please check the deal information."
+        )
+
+
+@app.get("/model-metrics")
+def get_model_metrics_endpoint():
+    """GET /model-metrics: Returns multi-model comparison table, holdout test metrics,
+    and confusion matrix.
+    """
+    metrics_path = PROJECT_ROOT / "models" / "metrics.json"
+    eval_path = PROJECT_ROOT / "models" / "evaluation_report.json"
+
+    if not metrics_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="Model metrics not found. Please run training pipeline first."
+        )
+
+    with open(metrics_path, "r") as f:
+        metrics_data = json.load(f)
+
+    if eval_path.exists():
+        with open(eval_path, "r") as f:
+            eval_data = json.load(f)
+            metrics_data["holdout_evaluation"] = eval_data
+
+    next_stage_meta_path = PROJECT_ROOT / "models" / "next_stage_metadata.json"
+    if next_stage_meta_path.exists():
+        with open(next_stage_meta_path, "r") as f:
+            metrics_data["next_stage_model"] = json.load(f)
+
+    next_stage_comp_path = PROJECT_ROOT / "models" / "next_stage_comparison.json"
+    if next_stage_comp_path.exists():
+        with open(next_stage_comp_path, "r") as f:
+            metrics_data["next_stage_comparison"] = json.load(f)
+
+    return metrics_data
+
+
+@app.get("/feature-importance")
+def get_feature_importance_endpoint():
+    """GET /feature-importance: Returns top predictive feature weights driving deal progression."""
+    feat_path = PROJECT_ROOT / "models" / "feature_importance.json"
+
+    if not feat_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="Feature importance data not found. Please run training pipeline first."
+        )
+
+    with open(feat_path, "r") as f:
+        features_data = json.load(f)
+
+    return {"top_features": features_data}
+
+
+@app.get("/dataset-insights")
+@app.get("/sales-insights")
+def get_dataset_insights_endpoint():
+    """GET /dataset-insights: Returns dynamically calculated historical dataset summary cards
+    (Total Deals, Outcomes, Avg Calls, Objections, Follow-ups) and the 4 business charts.
+    """
+    if not analyze_sales_data:
+        raise HTTPException(
+            status_code=503,
+            detail="Dataset analysis engine is not available."
+        )
+
+    try:
+        data = analyze_sales_data()
+        return data
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error analyzing dataset: {str(e)}"
+        )
 
 
 if __name__ == "__main__":

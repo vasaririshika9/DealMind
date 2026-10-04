@@ -25,7 +25,7 @@ base_url = os.getenv(
 
 bank_id = os.getenv(
     "HINDSIGHT_BANK_ID",
-    "dealsense-sales"
+    "dealsight-sales"
 )
 
 client = None

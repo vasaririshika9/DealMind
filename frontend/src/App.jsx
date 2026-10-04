@@ -6,11 +6,26 @@ import CallTimeline from './components/CallTimeline';
 import BriefCard from './components/BriefCard';
 import LoadingState from './components/LoadingState';
 import AddCallModal from './components/AddCallModal';
-import { PlusCircle, RefreshCw, AlertCircle, Sparkles, BrainCircuit } from 'lucide-react';
+import PredictiveDashboard from './components/PredictiveDashboard';
+import ModelPerformance from './components/ModelPerformance';
+import DatasetDashboard from './components/DatasetDashboard';
+import {
+  PlusCircle,
+  RefreshCw,
+  AlertCircle,
+  Sparkles,
+  BrainCircuit,
+  TrendingUp,
+  BarChart3,
+  PhoneCall,
+  Sliders,
+  Database,
+} from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8001').replace(/\/+$/, '');
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('brief'); // 'brief' | 'predictive' | 'models'
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedCallNumber, setSelectedCallNumber] = useState(1);
@@ -367,148 +382,197 @@ export default function App() {
       <main className="flex-1 w-full page-container py-8 space-y-8 z-10 dashboard-container">
 
         {/* Hero & App Intro */}
-        <div className="text-center w-full max-w-4xl mx-auto pt-2 pb-4">
-
+        <div className="text-center w-full max-w-4xl mx-auto pt-2 pb-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--color-cream)]/10 border border-[var(--border-primary)] text-[var(--color-cream)] text-xs font-semibold mb-3">
-
             <BrainCircuit className="w-4 h-4 text-[var(--color-cream)]" />
-
-            AI Sales Memory & Pre-Call Intelligence
-
+            DealSight AI • Memory + Machine Learning + Explainability
           </div>
-
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[var(--color-cream)]">
-            Smart Call History Briefings
+            AI Deal Intelligence & Predictive Analytics
           </h2>
-
           <p className="text-sm sm:text-base text-[var(--color-cream)] mt-2 max-w-2xl mx-auto opacity-90">
-            Select an account to view historical sales calls, track buyer sentiment shifts across calls, and generate AI pre-call briefs powered by Groq.
+            Combine long-term customer memory with predictive machine learning to forecast deal progression, identify risk, and guide sales execution.
           </p>
-
         </div>
 
-        {/* Customer Selector */}
-        <CustomerSelector
-          customers={customers}
-          selectedCustomer={selectedCustomer}
-          onSelectCustomer={handleSelectCustomer}
-        />
+        {/* Navigation Tabs */}
+        <div className="flex justify-center w-full pb-2">
+          <div className="inline-flex flex-wrap justify-center p-1.5 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-primary)] shadow-lg gap-1 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('brief')}
+              className={`px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'brief'
+                  ? 'bg-[var(--color-cream)] text-[var(--button-primary-text)] shadow-md'
+                  : 'text-[var(--color-cream)] hover:text-white hover:bg-[var(--bg-card)]'
+              }`}
+            >
+              <PhoneCall className="w-4 h-4" />
+              <span>Calls & Pre-Call Brief</span>
+            </button>
 
-        {/* Action Controls & New Call Button */}
-        {selectedCustomer && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full border-t border-[var(--border-primary)] pt-6 gap-4">
+            <button
+              type="button"
+              onClick={() => setActiveTab('forecast')}
+              className={`px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'forecast'
+                  ? 'bg-[var(--color-cream)] text-[var(--button-primary-text)] shadow-md'
+                  : 'text-[var(--color-cream)] hover:text-white hover:bg-[var(--bg-card)]'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span>🔮 Deal Forecast</span>
+            </button>
 
-            <div>
-              <h3 className="text-lg sm:text-xl font-bold text-[var(--color-cream)] flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('insights')}
+              className={`px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'insights'
+                  ? 'bg-[var(--color-cream)] text-[var(--button-primary-text)] shadow-md'
+                  : 'text-[var(--color-cream)] hover:text-white hover:bg-[var(--bg-card)]'
+              }`}
+            >
+              <Database className="w-4 h-4" />
+              <span>📊 Sales Insights</span>
+            </button>
 
-                <span>
-                  {selectedCustomer.customer_name}
-                </span>
+            <button
+              type="button"
+              onClick={() => setActiveTab('models')}
+              className={`px-3.5 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer ${
+                activeTab === 'models'
+                  ? 'bg-[var(--color-cream)] text-[var(--button-primary-text)] shadow-md'
+                  : 'text-[var(--color-cream)] hover:text-white hover:bg-[var(--bg-card)]'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>🏆 Model Performance</span>
+            </button>
+          </div>
+        </div>
 
-                <span className="text-xs font-normal text-[var(--color-cream)]">
-                  ({selectedCustomer.company_name})
-                </span>
+        {/* Tab 4: Model Performance (For Judges) */}
+        {activeTab === 'models' && (
+          <ModelPerformance apiUrl={API_URL} />
+        )}
 
-              </h3>
+        {/* Tab 3: Sales Insights (Dataset Dashboard) */}
+        {activeTab === 'insights' && (
+          <DatasetDashboard apiUrl={API_URL} />
+        )}
 
-              <p className="text-xs text-[var(--color-cream)] font-medium">
-                Timeline records & instant pre-call briefing
-              </p>
-            </div>
+        {/* Tab 2: Deal Forecast (The Main Prediction Screen) */}
+        {activeTab === 'forecast' && (
+          <div className="space-y-6">
+            <CustomerSelector
+              customers={customers}
+              selectedCustomer={selectedCustomer}
+              onSelectCustomer={handleSelectCustomer}
+            />
 
-            <div className="flex items-center gap-3">
-
-              <button
-                type="button"
-                onClick={() =>
-                  fetchBrief(
-                    selectedCustomer.customer_name,
-                    selectedCallNumber
-                  )
-                }
-                className="px-3.5 py-2 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--color-cream)] border border-[var(--border-primary)] text-xs font-semibold flex items-center gap-1.5 transition-colors"
-                title="Refresh Brief"
-              >
-
-                <RefreshCw
-                  className={`w-3.5 h-3.5 ${loading
-                    ? 'animate-spin text-[var(--color-cream)]'
-                    : ''
-                    }`}
-                />
-
-                <span>Refresh</span>
-
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-[var(--button-primary)] hover:bg-[var(--hover-primary)] text-[var(--button-primary-text)] text-xs font-extrabold shadow-lg shadow-[var(--color-cream)]/20 flex items-center gap-1.5 transition-all transform hover:-translate-y-0.5"
-              >
-
-                <PlusCircle
-                  className="w-4 h-4 text-[var(--button-primary-text)]"
-                />
-
-                <span>
-                  Log Call #{nextCallNumber}
-                </span>
-
-              </button>
-
-            </div>
+            <PredictiveDashboard
+              prediction={briefData?.prediction}
+              customerName={selectedCustomer?.customer_name}
+              companyName={selectedCustomer?.company_name}
+              apiUrl={API_URL}
+            />
           </div>
         )}
 
-        {/* Call Timeline */}
-        {briefData?.history &&
-          briefData.history.length > 0 && (
-            <CallTimeline
-              calls={briefData.history}
-              selectedCallNumber={selectedCallNumber}
-              onSelectCall={handleSelectCall}
+        {/* Tab 1: Call History & Executive Brief (Original Flow) */}
+        {activeTab === 'brief' && (
+          <>
+            {/* Customer Selector */}
+            <CustomerSelector
+              customers={customers}
+              selectedCustomer={selectedCustomer}
+              onSelectCustomer={handleSelectCustomer}
             />
-          )}
 
-        {/* Loading State or Brief Card */}
-        {loading ? (
-          <LoadingState message="Recalling memory..." />
-        ) : error ? (
+            {/* Action Controls & New Call Button */}
+            {selectedCustomer && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full border-t border-[var(--border-primary)] pt-6 gap-4">
+                <div>
+                  <h3 className="text-lg sm:text-xl font-bold text-[var(--color-cream)] flex items-center gap-2">
+                    <span>{selectedCustomer.customer_name}</span>
+                    <span className="text-xs font-normal text-[var(--color-cream)]">
+                      ({selectedCustomer.company_name})
+                    </span>
+                  </h3>
+                  <p className="text-xs text-[var(--color-cream)] font-medium">
+                    Timeline records & instant pre-call briefing
+                  </p>
+                </div>
 
-          <div className="w-full max-w-2xl mx-auto my-8 p-6 rounded-2xl bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30 text-[var(--status-danger)] text-sm text-center flex flex-col items-center gap-2">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      fetchBrief(
+                        selectedCustomer.customer_name,
+                        selectedCallNumber
+                      )
+                    }
+                    className="px-3.5 py-2 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--color-cream)] border border-[var(--border-primary)] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                    title="Refresh Brief"
+                  >
+                    <RefreshCw
+                      className={`w-3.5 h-3.5 ${
+                        loading ? 'animate-spin text-[var(--color-cream)]' : ''
+                      }`}
+                    />
+                    <span>Refresh</span>
+                  </button>
 
-            <AlertCircle className="w-8 h-8 text-[var(--status-danger)]" />
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(true)}
+                    className="px-4 py-2 rounded-xl bg-[var(--button-primary)] hover:bg-[var(--hover-primary)] text-[var(--button-primary-text)] text-xs font-extrabold shadow-lg shadow-[var(--color-cream)]/20 flex items-center gap-1.5 transition-all transform hover:-translate-y-0.5"
+                  >
+                    <PlusCircle className="w-4 h-4 text-[var(--button-primary-text)]" />
+                    <span>Log Call #{nextCallNumber}</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
-            <p className="font-bold">
-              Unable to generate brief
-            </p>
+            {/* Call Timeline */}
+            {briefData?.history && briefData.history.length > 0 && (
+              <CallTimeline
+                calls={briefData.history}
+                selectedCallNumber={selectedCallNumber}
+                onSelectCall={handleSelectCall}
+              />
+            )}
 
-            <p className="text-xs text-[var(--status-danger)]/80">
-              {error}
-            </p>
-
-            <button
-              onClick={() =>
-                fetchBrief(
-                  selectedCustomer.customer_name,
-                  selectedCallNumber
-                )
-              }
-              className="mt-2 px-4 py-1.5 rounded-xl bg-[var(--status-danger)]/20 hover:bg-[var(--status-danger)]/30 text-xs font-semibold text-[var(--text-primary)] border border-[var(--status-danger)]/40"
-            >
-              Retry Request
-            </button>
-
-          </div>
-
-        ) : (
-
-          <BriefCard
-            briefData={briefData}
-            selectedCallNumber={selectedCallNumber}
-          />
-
+            {/* Loading State or Brief Card */}
+            {loading ? (
+              <LoadingState message="Recalling memory & calculating deal prediction..." />
+            ) : error ? (
+              <div className="w-full max-w-2xl mx-auto my-8 p-6 rounded-2xl bg-[var(--status-danger)]/15 border border-[var(--status-danger)]/30 text-[var(--status-danger)] text-sm text-center flex flex-col items-center gap-2">
+                <AlertCircle className="w-8 h-8 text-[var(--status-danger)]" />
+                <p className="font-bold">Unable to generate brief</p>
+                <p className="text-xs text-[var(--status-danger)]/80">{error}</p>
+                <button
+                  onClick={() =>
+                    fetchBrief(
+                      selectedCustomer.customer_name,
+                      selectedCallNumber
+                    )
+                  }
+                  className="mt-2 px-4 py-1.5 rounded-xl bg-[var(--status-danger)]/20 hover:bg-[var(--status-danger)]/30 text-xs font-semibold text-[var(--text-primary)] border border-[var(--status-danger)]/40"
+                >
+                  Retry Request
+                </button>
+              </div>
+            ) : (
+              <BriefCard
+                briefData={briefData}
+                selectedCallNumber={selectedCallNumber}
+              />
+            )}
+          </>
         )}
 
       </main>
@@ -521,7 +585,7 @@ export default function App() {
           <Sparkles className="w-3.5 h-3.5 text-[var(--color-cream)]" />
 
           <span className="font-semibold text-[var(--color-cream)]">
-            DealSense AI
+            DealSight AI
           </span>
 
           — AI-powered Deal Intelligence Agent

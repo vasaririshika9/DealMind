@@ -16,7 +16,7 @@ export default function Header({ isBackendConnected }) {
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl font-extrabold tracking-tight text-[var(--color-cream)]">
-                DealSense AI
+                DealSight AI
               </h1>
               <span className="px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-full bg-[var(--color-cream)]/15 text-[var(--color-cream)] border border-[var(--border-primary)]">
                 PRO

@@ -1,967 +1,420 @@
-# 💼 DealMind — AI Deal Intelligence Agent
+# DealSight AI
 
-DealMind is an AI-powered sales intelligence application that helps sales teams prepare for customer conversations by remembering important information from previous calls.
+**AI-Powered Sales Deal Intelligence and Prediction Assistant**
 
-Instead of treating every customer conversation as isolated, DealMind uses Hindsight as a long-term memory layer to retain and recall important deal information such as objections, competitors, customer preferences, sentiment, quotes, and next steps.
-
-Groq is used as the LLM layer to analyze the conversation history and generate a concise pre-call intelligence brief.
+> DealSight AI remembers customer interactions, predicts what is likely to happen with a deal, explains why, and recommends the next action.
 
 ---
 
-## 🚀 Live Demo
+## 📌 Problem
 
-🔗 **[Try DealMind Live](https://deal-intelligence-agent-phi.vercel.app/)**
+Enterprise sales representatives routinely juggle dozens of active deals simultaneously. Before every critical call or follow-up, sales reps must manually reconstruct the deal context by reviewing:
+* Notes and logs from previous calls
+* Past customer objections and pricing friction
+* Competing vendors under customer evaluation
+* Shifting customer sentiment and engagement velocity
+* Current deal stage and overdue action items
 
-## 🧠 1. What DealMind Does
+Because these critical signals remain scattered across unstructured conversation transcripts and CRM notes, reps struggle to quickly answer three fundamental questions:
+1. **What is happening with this deal?**
+2. **Is it likely to move forward or stall?**
+3. **What specific action should the salesperson take next?**
 
-The application follows this flow:
+---
 
-📞 Customer Call
+## 💡 Solution
 
-↓
+**DealSight AI** is a sales decision assistant designed around one clear user story:
 
-💾 Save Call
+$$\text{\textbf{WHAT WILL HAPPEN?}} \longrightarrow \text{\textbf{WHY?}} \longrightarrow \text{\textbf{WHAT SHOULD I DO NEXT?}}$$
 
-↓
+DealSight bridges customer memory with statistical machine learning:
+* **Hindsight Memory** preserves long-term, customer-specific episodic context across calls.
+* **Supervised Machine Learning** (trained on 2,500 real B2B deals) predicts progression and loss probabilities.
+* **SHAP (Shapley Additive exPlanations)** decomposes predictions into plain-English positive drivers and risk factors.
+* **Groq LLM** synthesizes the prediction, SHAP attributions, and customer memory into a concise, actionable next step for the sales representative.
 
-🧩 Analyze / Structure Call Information
+---
 
-↓
+## 🌟 Key Features
 
-🧠 Hindsight Long-Term Memory
+### 👤 Customer Intelligence
+* **Hindsight Long-Term Customer Memory**: Persistent episodic memory across customer touchpoints.
+* **Customer Profiles & Context**: Track company name, industry, size, and deal value.
+* **Call Timeline & History**: Step-by-step chronology of past conversations and sentiment trends.
+* **Friction & Objection Tracking**: Flags unresolved pricing objections, timeline delays, and competitor threats.
 
-↓
+### 🤖 AI Assistance
+* **Groq-Powered Pre-Call Brief**: Concise executive briefing generated before every customer interaction.
+* **Context-Aware Recommendations**: Tailored playbooks synthesized from historical objections and winning strategies.
+* **Plain-Language Translations**: Mathematical attributions translated into natural sales signals.
 
-🔍 Recall Relevant Customer History
+### 📊 Data Science & Machine Learning
+* **Historical Sales Dataset**: 2,500 structured enterprise B2B sales records (`data/sales_data.csv`).
+* **Data Cleaning & Preprocessing**: Deduplication, median imputation, standard scaling, and one-hot encoding without target leakage.
+* **Feature Engineering**: Derives sales momentum, objection pressure, decision-maker engagement, and response health.
+* **Multi-Model Evaluation**: Stratified 70/15/15 train/validation/test split evaluating Logistic Regression, Random Forest, and XGBoost.
+* **Production Calibration**: Optimized for high ROC-AUC and maximum Recall on Lost Deals to catch slipping deals early.
+* **Predictive Pipeline**: Complete scikit-learn `Pipeline` bundled into `models/deal_prediction_model.pkl`.
 
-↓
+### 🧠 Explainability (SHAP)
+* **Mathematical Attribution**: Exact linear decomposition (`LinearExplainer`) for calibrated production models.
+* **Positive Signals**: Highlights key drivers moving the deal forward (e.g., completed demos, executive involvement).
+* **Risk Factors**: Identifies deal friction points (e.g., unanswered pricing concerns, competitor evaluation).
+* **Judge Details Drawer**: Full transparency for judges and ML engineers with exact Shapley values and feature weights.
 
-🤖 Groq LLM
+### 🔮 Predictive Intelligence & Deal Forecast
+* **Real Model Probabilities**: Progression and loss percentages generated directly from `predict_proba()`.
+* **Dynamic Deal Health**: Automatically flags deals as *Healthy Deal*, *Needs Attention*, or *At Risk*.
+* **Next Likely Milestone**: Multi-class transition model (`models/next_stage_model.pkl`) predicting the upcoming milestone with confidence score.
+* **Interactive What-If Sandbox**: Live toggles to simulate changing buyer conditions (executive involvement, objections, response delay).
 
-↓
+### 📈 Sales Insights Dashboard
+* **Dynamic Dataset Metrics**: Total deals (2,500), outcome distribution (39% won / 61% lost), average calls (7.6), objections (1.0), and follow-ups (5.0).
+* **4 Business Charts**:
+  1. *Customer Interest vs Deal Outcome*
+  2. *Pricing & Objections vs Deal Outcome*
+  3. *Conversation Activity vs Deal Outcome*
+  4. *Deal Stage vs Outcome*
 
-📋 Pre-Call Intelligence Brief
+---
+
+## 🏗️ Architecture
+
+```text
+                    DealSight AI
+                         │
+          ┌──────────────┴──────────────┐
+          │                             │
+          ▼                             ▼
+   Hindsight Memory              Historical Data
+   (Customer Context)          (2,500 B2B Sales Deals)
+          │                             │
+          ▼                             ▼
+    Call History                 Data Processing
+  (Timeline & Notes)       (Cleaning & Leakage Prevention)
+          │                             │
+          │                    Feature Engineering
+          │                 (Velocity, Pressure, Health)
+          │                             │
+          │                         ML Models
+          │                 (LogReg, RF, XGBoost)
+          │                             │
+          │                        Best Model
+          │                   (Calibrated Pipeline)
+          │                             │
+          └───────────► Prediction ◄────┘
+                       (predict_proba)
+                              │
+                              ▼
+                         SHAP Explain
+                       (LinearExplainer)
+                              │
+                              ▼
+                      Key Driving Factors
+                      (Positive & Concerns)
+                              │
+                              ▼
+                          Groq LLM
+                   (Synthesis & Guardrails)
+                              │
+                              ▼
+                      Recommended Action
+                              │
+                              ▼
+                         DealSight UI
+             (Hero Forecast + Sales Intelligence)
+```
+
+---
+
+## ⚙️ How It Works
+
+1. **Customer Interaction Logged**: Notes, quotes, objections, and sentiment from calls are recorded.
+2. **Hindsight Retains Memory**: Key customer details and previous friction points are stored in Hindsight memory.
+3. **Data Cleaning & Engineering**: Signals such as objection pressure, response latency, and decision-maker involvement are engineered without target leakage.
+4. **Model Predicts Outcome**: The calibrated machine-learning model computes the exact probability of progression versus loss using `predict_proba()`.
+5. **Next Milestone Estimated**: The multi-class transition model predicts the most likely next pipeline stage (e.g., *Negotiation* with 78% confidence).
+6. **SHAP Calculates Factor Impact**: SHAP attributes the specific positive factors driving the deal forward and the exact risk concerns creating friction.
+7. **Customer Context Retrieved**: Relevant historical interactions and past successful objection resolutions are recalled from Hindsight.
+8. **Groq Synthesizes Actionable Guidance**: Groq translates the structured ML prediction, SHAP drivers, and customer context into a concise, salesperson-friendly action recommendation.
+9. **Sales Rep Executes**: The salesperson opens DealSight, immediately understands deal health in 5 seconds, and prepares a tailored follow-up.
+
+---
+
+## 🛠️ Technology Stack
+
+### Frontend
+* **React 18**: Component-driven UI architecture
+* **Vite 6**: Fast build tool and development server
+* **JavaScript (ES Modules)**: Application logic and state management
+* **Tailwind CSS & Vanilla CSS**: Custom responsive design system with dark-mode aesthetic
+* **Framer Motion**: Smooth micro-animations and transition states
+* **Lucide React**: Consistent iconography
+
+### Backend
+* **Python 3.10+ / 3.14**: Backend runtime
+* **FastAPI**: Asynchronous high-performance REST API
+* **Uvicorn**: ASGI web server
+* **Pydantic v2**: Strict schema validation and data parsing
+* **python-dotenv**: Environment configuration management
+
+### AI / Machine Learning
+* **Scikit-learn**: Data preprocessing, ColumnTransformer, Logistic Regression, Random Forest, and model pipelines
+* **XGBoost**: Gradient-boosted decision trees benchmark
+* **SHAP**: Shapley Additive exPlanations for model explainability
+* **Pandas & NumPy**: Tabular data manipulation and mathematical vector operations
+* **Joblib**: Model serialization and persistence
+
+### External AI Services
+* **Hindsight**: Long-term episodic memory engine for customer interaction retention
+* **Groq Cloud API**: High-speed LLM inference (`openai/gpt-oss-120b`) for plain-English synthesis
+
+---
+
+## 📂 Project Structure
+
+```text
+DealMind/
+│
+├── backend/
+│   ├── main.py                     # FastAPI application endpoints & routing
+│   ├── requirements.txt            # Python dependencies (UTF-8)
+│   ├── .env.example                # Backend environment template
+│   ├── services/
+│   │   ├── ai_service.py           # Groq LLM integration
+│   │   ├── hindsight_service.py    # Hindsight memory retention & recall
+│   │   ├── prediction_service.py   # Unified ML prediction, SHAP & Groq synthesis
+│   │   └── explainability_service.py# SHAP attribution service
+│   ├── ml/
+│   │   ├── train.py                # Multi-model training harness
+│   │   ├── evaluate.py             # Holdout test set evaluation
+│   │   ├── train_next_stage.py     # Multi-class milestone transition model
+│   │   ├── data_analysis.py        # Dataset statistical insights & chart generation
+│   │   └── model_results.json      # Dynamic benchmark results
+│   └── test_hindsight.py          # Standalone Hindsight connectivity test
+│
+├── frontend/
+│   ├── index.html                  # HTML entry point with metadata
+│   ├── package.json                # Frontend dependencies and npm scripts
+│   ├── vite.config.js              # Vite configuration
+│   ├── .env.example                # Frontend environment template
+│   └── src/
+│       ├── main.jsx                # React root mount
+│       ├── App.jsx                 # Main navigation & 4-tab container
+│       ├── index.css               # Global theme & CSS variables
+│       └── components/
+│           ├── Header.jsx          # Top brand bar & backend status badge
+│           ├── CustomerSelector.jsx# Interactive customer switcher
+│           ├── CallTimeline.jsx    # Chronological call history
+│           ├── BriefCard.jsx       # Pre-call executive brief
+│           ├── DealForecast.jsx    # Hero forecast prediction card
+│           ├── PredictionReasons.jsx# SHAP positive and risk reasons
+│           ├── RecommendedAction.jsx# Groq next-step action playbook
+│           ├── PredictiveDashboard.jsx # Full forecast screen + What-If sandbox + Judge drawer
+│           ├── DatasetDashboard.jsx# Sales Insights dataset KPIs & 4 business charts
+│           ├── ModelPerformance.jsx # Model comparison table, ROC-AUC, confusion matrix
+│           └── AddCallModal.jsx    # Modal for logging new customer calls
+│
+├── data/
+│   ├── sales_data.csv              # 2,500 enterprise B2B historical sales records
+│   └── mock_calls.json             # Structured customer conversation records
+│
+├── models/
+│   ├── deal_prediction_model.pkl   # Calibrated production ML pipeline
+│   ├── next_stage_model.pkl        # Multi-class pipeline for next milestone prediction
+│   ├── metrics.json                # Validated holdout test metrics
+│   ├── model_comparison.json       # Multi-model benchmarking comparison
+│   └── evaluation_report.json      # Holdout confusion matrix and report
+│
+├── src/
+│   ├── data_preprocessing.py       # Feature engineering & ColumnTransformer
+│   ├── deal_features.py            # Extracts features from call history
+│   ├── explainability.py           # Feature impact calculation
+│   └── train_model.py              # Pipeline training script
+│
+├── screenshots/                    # UI screenshots
+├── README.md                       # Project documentation
+└── .gitignore                      # Git ignore file (excludes .env and venv)
+```
+
+---
+
+## 🏆 Model Evaluation & Comparison
+
+All models were evaluated using a stratified 70/15/15 train/validation/test split on 2,500 historical deals ($N = 375$ unseen holdout deals).
+
+### Evaluation Results
+
+| Model Architecture | Accuracy | Precision | Recall (Prog) | Recall (Lost / Risk) | F1-Score | ROC-AUC | Production Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Logistic Regression** (Calibrated) | **85.6%** | **79.9%** | **84.3%** | **86.5%** | **82.0%** | **0.952** | 🏆 **Selected Best Model** |
+| **XGBoost Classifier** | 85.9% | 80.0% | 84.9% | 86.5% | 82.4% | 0.937 | Evaluated Benchmark |
+| **Random Forest Classifier** | 81.3% | 74.7% | 78.8% | 83.0% | 76.7% | 0.892 | Evaluated Benchmark |
+| **HistGradientBoosting** | 86.4% | 82.3% | 82.9% | 88.7% | 82.6% | 0.935 | Evaluated Benchmark |
+
+### Why Logistic Regression Was Selected
+In enterprise B2B sales forecasting, missed risks (false positives) lead to sudden quarter slippage and wasted executive attention. Logistic Regression achieved the highest **ROC-AUC (0.952)** and superior **Recall on Lost Deals (86.5%)**, while providing exact, unapproximated linear Shapley attributions with zero inference latency.
+
+### Holdout Confusion Matrix ($N = 375$ Unseen Deals)
+* **True Negatives (Correctly Caught Lost Deals)**: 198
+* **True Positives (Correctly Predicted Progression)**: 123
+* **False Positives (False Alarms)**: 31
+* **False Negatives (Missed Lost Deals)**: 23
+
+---
+
+## 🔮 Prediction Example (Illustrative)
+
+```text
+🔮 DEAL FORECAST
+
+Customer: Rahul Sharma
+Company:  Zenith Textiles
+
+PREDICTED OUTCOME
+🔮 Likely to Progress — 99% chance
+(1% probability of stalling or loss)
+
+WHY WE THINK THIS (Positive Signals)
+✓ Recent touchpoint within healthy sales cadence
+✓ Customer interest is improving across conversations
+✓ Product demonstration has been successfully completed
+✓ Executive decision maker is involved in conversations
+
+⚠ WATCH OUT FOR (Main Concern)
+Pricing concerns remain an unresolved friction point
+
+🔮 NEXT LIKELY STEP
+Negotiation (99% confidence)
+
+💡 WHAT SHOULD I DO NEXT?
+"Address the pricing concern using the ROI comparison that worked in previous discussions."
+```
+
+*(Values shown above illustrate dynamic output generated via `predict_proba()`, `LinearExplainer`, and Groq).*
 
 ---
 
 ## 📸 Screenshots
 
-### 🖥️ 1. Dashboard
-
-![DealMind Dashboard](./screenshots/img1.png)
-
-
-
-### 👤 2. Customer Details
-
-![Customer Details](./screenshots/img2.png)
-
-
-
-### 📞 3. Call History
-
-![Call History](./screenshots/img3.png)
-
-
-
-### 📋 4. Pre-Call Intelligence Brief
-
-![Pre-Call Brief](./screenshots/img4.png)
-
-
-
-### 🧠 5. Hindsight Memory
-
-![Hindsight Memory](./screenshots/hindsight.jpeg)
+| Feature | Screenshot |
+| :--- | :--- |
+| **Pre-Call Executive Brief** | ![Pre-Call Brief](./screenshots/img4.png) |
+| **Customer Details & Context** | ![Customer Details](./screenshots/img2.png) |
+| **Call Timeline & History** | ![Call History](./screenshots/img3.png) |
+| **Hindsight Memory Layer** | ![Hindsight Memory](./screenshots/hindsight.jpeg) |
+| **System Architecture** | ![Architecture](./screenshots/archi.jpeg) |
 
 ---
 
-## 🏗️ 2. Architecture
-![Architecture](./screenshots/archi.jpeg)
----
+## 🚀 Local Setup Instructions
 
-## 🛠️ 3. Tech Stack
-
-### 🎨 Frontend
-
-React  
-Vite  
-JavaScript  
-HTML  
-CSS  
-
-### ⚙️ Backend
-
-Python  
-FastAPI  
-Uvicorn  
-
-### 🤖 AI
-
-Groq  
-Hindsight  
-
-### 💾 Data / Utilities
-
-JSON  
-Requests  
-Pydantic  
-python-dotenv  
-aiohttp  
+### Prerequisites
+* **Python**: 3.10, 3.11, 3.12, or 3.14
+* **Node.js**: v18+ and npm
+* **Git**
 
 ---
 
-## 📁 4. Project Structure
+### 1. Backend Setup
 
-deal-intelligence-agent/
+Open a terminal and navigate to the backend directory:
 
-│
-
-├── backend/
-
-│   ├── main.py
-
-│   ├── requirements.txt
-
-│   ├── .env
-
-│   ├── .gitignore
-
-│   │
-
-│   ├── services/
-
-│   │   ├── ai_service.py
-
-│   │   └── hindsight_service.py
-
-│   │
-
-│   ├── data/
-
-│   │   └── mock_calls.json
-
-│   │
-
-│   ├── test_groq.py
-
-│   └── test_hindsight.py
-
-│
-
-├── frontend/
-
-│   ├── src/
-
-│   ├── public/
-
-│   ├── package.json
-
-│   └── vite.config.js
-
-│
-
-└── README.md
-
----
-
-## 📋 5. Requirements
-
-### ⚙️ Backend Requirements
-
-Python 3.10+
-
-pip
-
-Virtual environment
-
-Groq API key
-
-Hindsight API key
-
-### 🎨 Frontend Requirements
-
-Node.js
-
-npm
-
-### 🔎 Check Your Installations
-
-python --version
-
-pip --version
-
-node --version
-
-npm --version
-
----
-
-## 📥 6. Clone the Project
-
-git clone https://github.com/chinthalasneha/deal-intelligence-agent
-
-Enter the project:
-
-cd deal-intelligence-agent
-
----
-
-## ⚙️ 7. Backend Setup
-
-Go to the backend:
-
+```powershell
 cd backend
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-Create a virtual environment:
+#### Configure Environment Variables
+Create `backend/.env` based on `backend/.env.example`:
 
-python -m venv venv
-
-Activate it:
-
-.\venv\Scripts\Activate.ps1
-
-After activation, your terminal should look similar to:
-
-(venv) PS C:\Users\Rishika\...\deal-intelligence-agent\backend>
-
----
-
-## 📦 8. Install Backend Dependencies
-
-The requirements.txt file contains:
-
-fastapi
-
-uvicorn
-
-requests
-
-python-dotenv
-
-pydantic
-
-groq
-
-hindsight-client
-
-aiohttp
-
-Install them:
-
-python -m pip install -r requirements.txt
-
-Or install manually:
-
-python -m pip install fastapi uvicorn requests python-dotenv pydantic groq hindsight-client aiohttp
-
----
-
-## 🔑 9. Groq Setup
-
-Create a Groq API key from your Groq account.
-
-Store it in the backend `.env` file.
-
-⚠️ Do not put the key directly inside Python code.
-
----
-
-## 🧠 10. Hindsight Setup
-
-DealMind uses Hindsight as its long-term memory engine.
-
-Create a Hindsight Cloud account and create:
-
-- 🏢 Organization
-- 🧠 Memory bank
-- 🔑 API key
-
-The memory bank used by this project is:
-
-`dealsense-sales`
-
-The Hindsight API endpoint is:
-
-`https://api.hindsight.vectorize.io`
-
----
-
-## 🔐 11. Environment Variables
-
-Create:
-
-`backend/.env`
-
-Add:
-
-GROQ_API_KEY=your_groq_api_key
-
+```env
+GROQ_API_KEY=your_groq_api_key_here
 GROQ_MODEL=openai/gpt-oss-120b
 
-HINDSIGHT_API_KEY=your_hindsight_api_key
-
+HINDSIGHT_API_KEY=your_hindsight_api_key_here
 HINDSIGHT_BASE_URL=https://api.hindsight.vectorize.io
+HINDSIGHT_BANK_ID=dealsight-sales
+```
 
-HINDSIGHT_BANK_ID=dealsense-sales
+*(Note: The server will run and serve ML predictions even if API keys are not supplied. Groq and Hindsight features will gracefully fall back if keys are absent).*
 
-### ⚠️ Important
+#### Start Backend Server
+```powershell
+uvicorn main:app --reload --port 8001
+```
 
-Never commit `.env` to GitHub.
-
-Your `.gitignore` should contain:
-
-.env
-
-*.env
-
-venv/
-
-__pycache__/
+Backend will be available at:
+* **API Server**: `http://localhost:8001`
+* **Interactive API Docs (Swagger)**: `http://localhost:8001/docs`
 
 ---
 
-## 🧪 12. Verify Groq
+### 2. Frontend Setup
 
-From the backend directory with the virtual environment activated:
+Open a second terminal and navigate to the frontend directory:
 
-python test_groq.py
-
-A successful response confirms that the Groq API and configured model are working.
-
----
-
-## 🧪 13. Verify Hindsight
-
-Run:
-
-python test_hindsight.py
-
-This test verifies the Hindsight client, authentication, memory bank, retention, and recall functionality used by the project.
-
----
-
-## 🧠 14. How Hindsight Works in DealMind
-
-Hindsight acts as the long-term episodic memory engine.
-
-The application has two main memory operations:
-
-### 💾 RETAIN
-
-↓
-
-Store important information from a call
-
-### 🔍 RECALL
-
-↓
-
-Retrieve relevant information before another call
-
----
-
-## 📞 14.1 When a Call Is Saved
-
-The flow is:
-
-👤 User logs call
-
-↓
-
-`POST /save-call`
-
-↓
-
-🧩 Create structured memory statement
-
-↓
-
-💾 Hindsight RETAIN
-
-↓
-
-🧠 Memory stored in `dealsense-sales`
-
-The backend converts the call into an information-dense memory statement.
-
-Example:
-
-```python
-memory_statement = (
-    f"Customer {c_name} from {c_company} "
-    f"(Stage: {c_stage}, Sentiment: {c_sentiment}). "
-    f"Objection raised: {c_objection}. "
-    f"Competitor mentioned: {c_competitor}. "
-    f"Key quote: \"{c_quote}\". "
-    f"Next step: {c_next}."
-)
-
-## The memory is associated with the customer and company.
-
-Example:
-
-👤 Customer: Rahul Sharma
-
-🏢 Company: Zenith Textiles
-
-⚠️ Objection: Pricing
-
-🏆 Competitor: FabricFlow
-
-💬 Sentiment: Hesitant
-
-💡 15. Why Store Structured Memories?
-
-### Instead of sending every historical conversation to the LLM every time, DealMind stores important information as persistent memory.
-
-This allows the system to remember things such as:
-
-👤 Customer preferences
-⚠️ Objections
-🏆 Competitors
-💰 Pricing concerns
-💬 Important quotes
-😊 Sentiment
-📋 Requirements
-🤝 Commitments
-➡️ Next steps
-
-This also reduces the need to repeatedly place the entire conversation history into the LLM prompt.
-
-🔍 16. Hindsight Recall
-
-When the salesperson requests a pre-call brief:
-
-👤 User opens customer
-
-↓
-
-GET /brief/{customer_name}/{up_to_call_number}
-
-↓
-
-🔍 Hindsight RECALL
-
-↓
-
-🧠 Relevant customer memories
-
-↓
-
-🤖 Groq
-
-↓
-
-📋 Pre-call brief
-
-The backend sends a semantic query such as:
-
-query = (
-    f"What key preferences, objections, competitors, "
-    f"or details are known about {customer_name} "
-    f"from {company_name}?"
-)
-
-Hindsight searches the stored memories for relevant information.
-
-🤖 17. Memory + Groq
-
-The recalled Hindsight information is added to the Groq prompt.
-
-The prompt contains two major sources of information:
-
-📞 CALL HISTORY
-
-Call 1
-
-Call 2
-
-Call 3
-
-🧠 HINDSIGHT MEMORY
-Previous pricing objection
-Competitor mentioned
-Customer preference
-Previous commitment
-Important quote
-
-↓
-
-🤖 Groq generates the final pre-call intelligence brief.
-
-🔄 18. Complete AI Flow
-
-📞 Customer Conversation
-
-↓
-
-📝 Structured Call Information
-
-↓
-
-💾 Hindsight RETAIN
-
-↓
-
-🧠 Long-Term Memory
-
-↓
-
-🔍 Hindsight RECALL
-
-↓
-
-📋 Relevant Deal Context
-
-↓
-
-🤖 Groq LLM
-
-↓
-
-🎯 Pre-Call Intelligence Brief
-
-👤 19. Customer Isolation
-
-DealMind associates memories with the relevant customer and company.
-
-For example:
-
-👤 Customer A
-
-↓
-
-🏢 Company A
-
-↓
-
-🧠 Relevant memories
-
-And:
-
-👤 Customer B
-
-↓
-
-🏢 Company B
-
-↓
-
-🧠 Relevant memories
-
-This helps prevent unrelated customer information from being included in another customer's context.
-
-🛡️ 20. Graceful Fallback
-
-The application is designed so that Hindsight failure does not necessarily stop the entire application.
-
-If Hindsight is temporarily unavailable:
-
-⚠️ Hindsight unavailable
-
-↓
-
-🔍 Recall returns empty context
-
-↓
-
-📞 Existing call history is used
-
-↓
-
-🤖 Groq still generates the brief
-
-This gives the application a fallback path using the locally stored call history.
-
-🚀 21. Running the Backend
-
-From:
-
-backend/
-
-Activate the environment:
-
-.\venv\Scripts\Activate.ps1
-
-Start FastAPI:
-
-uvicorn main:app --reload --port 8001
-
-Backend:
-
-http://127.0.0.1:8001
-
-FastAPI documentation:
-
-http://127.0.0.1:8001/docs
-
-🎨 22. Running the Frontend
-
-Open a second terminal.
-
-Go to:
-
-cd "C:\Users\Rishika\OneDrive\Desktop\deal-intelligence-agent\frontend"
-
-Install frontend dependencies:
-
-npm install
-
-Start the frontend:
-
-npm run dev
-
-Vite will provide a URL similar to:
-
-http://localhost:5173
-
-🖥️ 23. Running the Complete Application
-
-You need two terminals.
-
-⚙️ Terminal 1 — Backend
-
-cd "C:\Users\Rishika\OneDrive\Desktop\deal-intelligence-agent\backend"
-
-.\venv\Scripts\Activate.ps1
-
-uvicorn main:app --reload --port 8001
-
-🎨 Terminal 2 — Frontend
-
-cd "C:\Users\Rishika\OneDrive\Desktop\deal-intelligence-agent\frontend"
-
-npm run dev
-
-Then open the Vite URL in your browser.
-
-🧪 24. Testing the Complete Flow
-1️⃣ Add a Customer Call
-
-Enter information such as:
-
-👤 Customer: Rahul Sharma
-
-🏢 Company: Zenith Textiles
-
-📊 Stage: Evaluation
-
-💬 Sentiment: Hesitant
-
-⚠️ Objection: Pricing
-
-🏆 Competitor: FabricFlow
-
-💬 Quote: "Your pricing is higher than what we expected."
-
-➡️ Next Step: Pricing discussion next week
-
-2️⃣ Save the Call
-
-The backend stores the call and sends the important information to Hindsight.
-
-POST /save-call
-
-↓
-
-🧠 Hindsight RETAIN
-
-3️⃣ Add Another Call
-
-The customer may now say:
-
-We like the product but need a better price.
-
-That information is also retained.
-
-4️⃣ Generate the Pre-Call Brief
-
-The application performs:
-
-🔍 Hindsight RECALL
-
-↓
-
-💰 Previous pricing concerns
-
-↓
-
-🏆 Competitor information
-
-↓
-
-💬 Customer sentiment
-
-↓
-
-🤝 Previous commitments
-
-↓
-
-🤖 Groq
-
-5️⃣ Display the Brief
-
-The frontend displays the generated intelligence for the salesperson.
-
-📋 25. Example Pre-Call Intelligence
-
-👤 Customer: Rahul Sharma
-
-🏢 Company: Zenith Textiles
-
-⚠️ Key Concerns
-Pricing remains the primary objection.
-Customer is comparing the product with FabricFlow.
-💬 Customer Sentiment
-Interested but price-sensitive.
-📞 Previous Discussion
-Customer requested better pricing.
-Customer is evaluating alternatives.
-🎯 Recommended Talking Points
-Address pricing concerns.
-Clarify the value provided by the product.
-Understand the competitor's offer.
-Confirm the next decision step.
-🔌 26. API Flow
-
-Important backend endpoints include:
-
-GET /health
-
-POST /save-call
-
-POST /calls
-
-GET /brief/{customer_name}/{up_to_call_number}
-
-The exact available endpoints can be checked through:
-
-http://127.0.0.1:8001/docs
-
-🧠 27. Hindsight Memory Model
-
-The architecture separates responsibilities:
-
-📁 Local JSON
-
-↓
-
-📞 Chronological call history
-
-↓
-
-🧠 Hindsight
-
-↓
-
-🔍 Long-term semantic memory
-
-↓
-
-🤖 Groq
-
-↓
-
-💡 Reasoning + generation
-
-↓
-
-⚛️ React
-
-↓
-
-🖥️ User interface
-
-This separation allows each component to focus on a specific task.
-
-💡 28. Why Hindsight Is Used
-Traditional Approach
-
-Every new call
-
-↓
-
-📜 Send entire conversation history
-
-↓
-
-📦 Large prompt
-
-↓
-
-🤖 LLM
-
-DealMind Approach
-
-📞 Call
-
-↓
-
-🧩 Extract important information
-
-↓
-
-💾 Hindsight RETAIN
-
-↓
-
-🧠 Persistent memory
-
-↓
-
-🔍 RECALL relevant information
-
-↓
-
-🤖 Groq
-
-The key idea is that memory becomes a separate system component instead of simply adding more conversation history to the prompt.
-
-🛠️ 29. Troubleshooting
-❌ Import "hindsight_client" could not be resolved
-
-Make sure the virtual environment is active:
-
-.\venv\Scripts\Activate.ps1
-
-Then:
-
-python -m pip install hindsight-client
-
-❌ Import "aiohttp" could not be resolved
-
-python -m pip install aiohttp
-
-🔑 HINDSIGHT_API_KEY is missing
-
-Check:
-
-backend/.env
-
-and make sure:
-
-HINDSIGHT_API_KEY=your_key
-
-exists.
-
-❌ Groq model_not_found
-
-Check:
-
-GROQ_MODEL=openai/gpt-oss-120b
-
-Make sure no additional text is present after the model name.
-
-❌ Backend not connecting
-
-Make sure FastAPI is running:
-
-uvicorn main:app --reload --port 8001
-
-Then check:
-
-http://127.0.0.1:8001/docs
-
-🔐 30. Security
-
-Never commit API keys.
-
-Do not put:
-
-GROQ_API_KEY
-
-HINDSIGHT_API_KEY
-
-inside the React frontend.
-
-Keep them in:
-
-backend/.env
-
-and add .env to .gitignore.
-
-⚡ 31. Development Commands — Quick Reference
-⚙️ Backend
-
-cd backend
-
-.\venv\Scripts\Activate.ps1
-
-python -m pip install -r requirements.txt
-
-uvicorn main:app --reload --port 8001
-
-🤖 Test Groq
-
-python test_groq.py
-
-🧠 Test Hindsight
-
-python test_hindsight.py
-
-🎨 Frontend
-
+```powershell
 cd frontend
-
 npm install
+```
 
+#### Configure Environment Variables
+Create `frontend/.env` based on `frontend/.env.example`:
+
+```env
+VITE_API_URL=http://localhost:8001
+```
+
+#### Start Frontend Development Server
+```powershell
 npm run dev
+```
 
-🏗️ 32. Overall Architecture
+Frontend will be available at:
+* **Web Application**: `http://localhost:5173`
 
+---
 
-                        ┌──────────────────────┐
-                        │    React / Vite      │
-                        │      Frontend        │
-                        └──────────┬───────────┘
-                                   │
-                                   ▼
-                        ┌──────────────────────┐
-                        │    FastAPI Backend   │
-                        └──────┬────────┬──────┘
-                               │        │
-                    ┌──────────┘        └───────────┐
-                    ▼                               ▼
-          ┌──────────────────┐             ┌──────────────────┐
-          │ mock_calls.json  │             │    Hindsight     │
-          │  Call History    │             │ Long-Term Memory │
-          └──────────────────┘             └────────┬─────────┘
-                                                     │
-                                                     │ Recall
-                                                     ▼
-                                            ┌──────────────────┐
-                                            │  Relevant Deal   │
-                                            │     Context      │
-                                            └────────┬─────────┘
-                                                     │
-                                                     ▼
-                                            ┌──────────────────┐
-                                            │      Groq        │
-                                            │       LLM        │
-                                            └────────┬─────────┘
-                                                     │
-                                                     ▼
-                                            ┌──────────────────┐
-                                            │  Pre-Call Brief  │
-                                            └──────────────────┘
-🎯 33. Key Idea
+## 🔗 Local Service URLs
 
-DealMind combines structured call history, persistent Hindsight memory, and Groq-based generation to give a sales agent continuity across customer conversations.
+| Service | URL |
+| :--- | :--- |
+| **Frontend Application** | `http://localhost:5173` |
+| **Backend API** | `http://localhost:8001` |
+| **Interactive API Documentation** | `http://localhost:8001/docs` |
+| **Cloud Deployment** | *Coming soon* |
 
-The important distinction is:
+---
 
-📞 Call History = What happened
+## 🔒 Security & Privacy
 
-🧠 Hindsight = What the system remembers
+* **Strict Secret Isolation**: All sensitive credentials (`GROQ_API_KEY`, `HINDSIGHT_API_KEY`) are loaded via backend environment variables and never exposed to the frontend client.
+* **Git Protection**: `.env` and `*.env` files are strictly excluded from version control via root and backend `.gitignore` rules.
+* **Sanitized Responses**: Raw API errors and stack traces are caught by custom exception handlers returning safe business-friendly messages.
 
-🤖 Groq = How the system reasons and communicates it
+---
 
-⚛️ React = How the salesperson interacts with it
+## ⚖️ Technical Honesty & Limitations
 
-This makes the agent capable of using information from earlier customer interactions rather than treating every call as a completely new conversation.
+* **Outcome vs Stage Separation**: The primary binary classifier predicts **Progression vs Loss**. A separate, dedicated multi-class model (`models/next_stage_model.pkl`) predicts specific pipeline milestone transitions.
+* **Predictions vs Recommendations**: The machine learning model generates probabilities; the Groq LLM synthesizes natural-language advice. DealSight does not make automated sales commitments—the human salesperson always retains final decision authority.
+* **Synthetic B2B Dataset**: The historical training dataset consists of 2,500 modeled enterprise deals designed to reflect typical sales cycle distributions, objections, and cadences.
 
-🚀 Built for AI-Powered Sales Intelligence
+---
 
-DealMind — Remember every deal. Prepare for every conversation.
+## 🔮 Future Roadmap
+
+* **Live CRM Integration**: Bi-directional synchronization with Salesforce, HubSpot, and Close.
+* **Automated Meeting Transcription**: Direct ingestion of Zoom and Google Meet audio recordings.
+* **Model Drift Monitoring**: Automatic tracking of feature distribution shifts and continuous model retraining.
+* **Multi-Tenant Memory Isolation**: Enterprise team workspaces with role-based access control.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.

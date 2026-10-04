@@ -1,0 +1,78 @@
+[
+  {
+    "model_name": "Logistic Regression",
+    "accuracy": 0.856,
+    "precision": 0.7987,
+    "recall_progressed": 0.8425,
+    "recall_lost": 0.8646,
+    "f1_score": 0.82,
+    "roc_auc": 0.9517,
+    "confusion_matrix": [
+      [
+        198,
+        31
+      ],
+      [
+        23,
+        123
+      ]
+    ]
+  },
+  {
+    "model_name": "Random Forest",
+    "accuracy": 0.8133,
+    "precision": 0.7468,
+    "recall_progressed": 0.7877,
+    "recall_lost": 0.8297,
+    "f1_score": 0.7667,
+    "roc_auc": 0.8916,
+    "confusion_matrix": [
+      [
+        190,
+        39
+      ],
+      [
+        31,
+        115
+      ]
+    ]
+  },
+  {
+    "model_name": "Gradient Boosting",
+    "accuracy": 0.8533,
+    "precision": 0.8138,
+    "recall_progressed": 0.8082,
+    "recall_lost": 0.8821,
+    "f1_score": 0.811,
+    "roc_auc": 0.9371,
+    "confusion_matrix": [
+      [
+        202,
+        27
+      ],
+      [
+        28,
+        118
+      ]
+    ]
+  },
+  {
+    "model_name": "HistGradientBoosting",
+    "accuracy": 0.864,
+    "precision": 0.8231,
+    "recall_progressed": 0.8288,
+    "recall_lost": 0.8865,
+    "f1_score": 0.8259,
+    "roc_auc": 0.9345,
+    "confusion_matrix": [
+      [
+        203,
+        26
+      ],
+      [
+        25,
+        121
+      ]
+    ]
+  }
+]

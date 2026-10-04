@@ -130,6 +130,36 @@ export default function BriefCard({ briefData, selectedCallNumber }) {
           </button>
         </div>
 
+        {/* Predictive Intelligence Ribbon */}
+        {briefData?.prediction && (
+          <div className="p-3 my-2 rounded-xl bg-[var(--bg-primary)]/80 border border-[var(--border-primary)] flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs uppercase font-extrabold tracking-wider text-[var(--color-cream)] flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[var(--color-cream)]" />
+                ML Prediction:
+              </span>
+              <span className={`px-2 py-0.5 rounded-md text-xs font-bold border ${
+                briefData.prediction.prediction === 'Progressed'
+                  ? 'bg-[var(--status-success)]/15 text-[var(--status-success)] border-[var(--status-success)]/40'
+                  : 'bg-[var(--status-danger)]/15 text-[var(--status-danger)] border-[var(--status-danger)]/40'
+              }`}>
+                {briefData.prediction.prediction} ({Math.round((briefData.prediction.progress_probability || 0) * 100)}% Progress Prob)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-4 text-xs">
+              <span className="text-[var(--color-cream)]">
+                Risk Level: <strong style={{
+                  color: briefData.prediction.risk_level === 'Low' ? 'var(--status-success)' : briefData.prediction.risk_level === 'Medium' ? 'var(--status-warning)' : 'var(--status-danger)'
+                }}>{briefData.prediction.risk_level} ({briefData.prediction.risk_score}/100)</strong>
+              </span>
+              <span className="text-[var(--color-green-light)]">
+                Next Stage: <strong className="text-[var(--color-cream)]">{briefData.prediction.predicted_next_stage}</strong>
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Structured Highlight Grid */}
         <div className="brief-highlight-grid">
           {/* Biggest Objection Card */}

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, PlusCircle, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 
-const API_URL = (import.meta.env.VITE_API_URL || 'https://dealmind-backend-du13.onrender.com').replace(/\/+$/, '');
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8001').replace(/\/+$/, '');
 
 export default function AddCallModal({
   isOpen,

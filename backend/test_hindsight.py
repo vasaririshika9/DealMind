@@ -17,7 +17,7 @@ load_dotenv()
 # 2. Read environment variables
 api_key = os.getenv("HINDSIGHT_API_KEY")
 base_url = os.getenv("HINDSIGHT_BASE_URL", "https://api.hindsight.vectorize.io")
-bank_id = os.getenv("HINDSIGHT_BANK_ID", "dealsense-sales")
+bank_id = os.getenv("HINDSIGHT_BANK_ID", "dealsight-sales")
 
 if not api_key:
     print("Error: HINDSIGHT_API_KEY is missing. Add it to your .env file.")

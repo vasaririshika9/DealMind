@@ -1,0 +1,158 @@
+{
+  "model_version": "1.0.0",
+  "training_date": "2026-10-04 17:44:19",
+  "selected_model": "Logistic Regression",
+  "evaluation_metrics": {
+    "model_name": "Logistic Regression",
+    "accuracy": 0.856,
+    "precision": 0.7987,
+    "recall": 0.8425,
+    "recall_lost": 0.8646,
+    "f1": 0.82,
+    "roc_auc": 0.9517,
+    "val_accuracy": 0.8987,
+    "val_roc_auc": 0.9632,
+    "confusion_matrix": [
+      [
+        198,
+        31
+      ],
+      [
+        23,
+        123
+      ]
+    ]
+  },
+  "all_models_compared": [
+    {
+      "model_name": "Logistic Regression",
+      "accuracy": 0.856,
+      "precision": 0.7987,
+      "recall": 0.8425,
+      "recall_lost": 0.8646,
+      "f1": 0.82,
+      "roc_auc": 0.9517,
+      "val_accuracy": 0.8987,
+      "val_roc_auc": 0.9632,
+      "confusion_matrix": [
+        [
+          198,
+          31
+        ],
+        [
+          23,
+          123
+        ]
+      ]
+    },
+    {
+      "model_name": "Random Forest",
+      "accuracy": 0.8133,
+      "precision": 0.7468,
+      "recall": 0.7877,
+      "recall_lost": 0.8297,
+      "f1": 0.7667,
+      "roc_auc": 0.8916,
+      "val_accuracy": 0.824,
+      "val_roc_auc": 0.9148,
+      "confusion_matrix": [
+        [
+          190,
+          39
+        ],
+        [
+          31,
+          115
+        ]
+      ]
+    },
+    {
+      "model_name": "XGBoost",
+      "accuracy": 0.8587,
+      "precision": 0.8,
+      "recall": 0.8493,
+      "recall_lost": 0.8646,
+      "f1": 0.8239,
+      "roc_auc": 0.9367,
+      "val_accuracy": 0.8827,
+      "val_roc_auc": 0.9459,
+      "confusion_matrix": [
+        [
+          198,
+          31
+        ],
+        [
+          22,
+          124
+        ]
+      ]
+    }
+  ],
+  "feature_count": 59,
+  "features": [
+    "deal_value",
+    "total_calls",
+    "days_since_last_call",
+    "calls_last_7_days",
+    "calls_last_30_days",
+    "price_objections",
+    "competitor_mentions",
+    "demo_requested",
+    "demo_completed",
+    "decision_maker_present",
+    "decision_maker_engagement",
+    "followups",
+    "followup_response_rate",
+    "response_delay_hours",
+    "sentiment_score",
+    "sentiment_trend",
+    "engagement_score",
+    "objection_count",
+    "objection_resolution_rate",
+    "budget_confirmed",
+    "timeline_confirmed",
+    "competitor_present",
+    "discount_requested",
+    "proposal_sent",
+    "proposal_age_days",
+    "stage_duration_days",
+    "customer_interest_score",
+    "next_action_completed",
+    "engagement_velocity",
+    "objection_pressure",
+    "decision_maker_score",
+    "response_health",
+    "stall_risk",
+    "unresolved_objection_ratio",
+    "pricing_risk",
+    "competitor_risk",
+    "deal_momentum",
+    "interaction_frequency",
+    "industry_Education",
+    "industry_Financial Services",
+    "industry_Healthcare",
+    "industry_Logistics",
+    "industry_Manufacturing",
+    "industry_Retail",
+    "industry_Technology",
+    "company_size_Enterprise",
+    "company_size_Mid-Market",
+    "company_size_SMB",
+    "company_size_Startup",
+    "deal_stage_Demo",
+    "deal_stage_Discovery",
+    "deal_stage_Evaluation",
+    "deal_stage_Negotiation",
+    "deal_stage_Proposal",
+    "previous_stage_Demo",
+    "previous_stage_Discovery",
+    "previous_stage_Evaluation",
+    "previous_stage_Lead",
+    "previous_stage_Negotiation"
+  ],
+  "sample_split": {
+    "train_samples": 1750,
+    "val_samples": 375,
+    "test_samples": 375
+  }
+}
