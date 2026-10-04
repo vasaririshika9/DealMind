@@ -28,17 +28,31 @@ from sklearn.metrics import (
 import sys
 from pathlib import Path
 
-# Add project root to sys.path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+# Add paths to sys.path
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BACKEND_DIR.parent
+for p in [str(BACKEND_DIR), str(PROJECT_ROOT)]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
-from src.data_preprocessing import load_and_preprocess_data, build_preprocessor, NUMERIC_FEATURES, CATEGORICAL_FEATURES
+try:
+    from ml.data_preprocessing import load_and_preprocess_data, build_preprocessor, NUMERIC_FEATURES, CATEGORICAL_FEATURES
+except ImportError:
+    from backend.ml.data_preprocessing import load_and_preprocess_data, build_preprocessor, NUMERIC_FEATURES, CATEGORICAL_FEATURES
 
 
-def train_and_evaluate_models(data_path: str = "data/sales_data.csv", models_dir: str = "models") -> Dict[str, Any]:
+def train_and_evaluate_models(data_path: str = None, models_dir: str = None) -> Dict[str, Any]:
     """Trains multiple classifiers, evaluates on validation/test sets, and saves the best model."""
-    os.makedirs(models_dir, exist_ok=True)
+    target_models_dir = Path(models_dir) if models_dir else (BACKEND_DIR / "models")
+    target_models_dir.mkdir(parents=True, exist_ok=True)
+    models_dir = str(target_models_dir)
+
+    if not data_path:
+        data_path = str(
+            BACKEND_DIR / "data" / "sales_data.csv"
+            if (BACKEND_DIR / "data" / "sales_data.csv").exists()
+            else PROJECT_ROOT / "data" / "sales_data.csv"
+        )
 
     X_train, X_val, X_test, y_train, y_val, y_test, preprocessor = load_and_preprocess_data(data_path)
 

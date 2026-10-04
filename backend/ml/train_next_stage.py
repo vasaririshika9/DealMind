@@ -33,18 +33,35 @@ from sklearn.metrics import (
     classification_report,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BACKEND_DIR.parent
+ML_DIR = Path(__file__).resolve().parent
 
-from src.stage_models import (
-    NUMERIC_STAGE_FEATURES,
-    CATEGORICAL_STAGE_FEATURES,
-    ALL_STAGE_FEATURES,
-    build_stage_preprocessor,
-    XGBStringClassifier,
-)
-from data.generate_transitions import generate_deal_transitions
+for p in [str(BACKEND_DIR), str(PROJECT_ROOT)]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+try:
+    from ml.stage_models import (
+        NUMERIC_STAGE_FEATURES,
+        CATEGORICAL_STAGE_FEATURES,
+        ALL_STAGE_FEATURES,
+        build_stage_preprocessor,
+        XGBStringClassifier,
+    )
+except ImportError:
+    from backend.ml.stage_models import (
+        NUMERIC_STAGE_FEATURES,
+        CATEGORICAL_STAGE_FEATURES,
+        ALL_STAGE_FEATURES,
+        build_stage_preprocessor,
+        XGBStringClassifier,
+    )
+
+try:
+    from data.generate_transitions import generate_deal_transitions
+except ImportError:
+    generate_deal_transitions = None
 
 
 def validate_transition_data(df: pd.DataFrame) -> None:
@@ -112,15 +129,27 @@ def split_grouped_by_deal(
 
 
 def train_next_stage_pipeline(
-    data_path: str = "data/deal_transitions.csv",
-    models_dir: str = "models",
+    data_path: str = None,
+    models_dir: str = None,
     random_state: int = 42,
 ) -> Dict[str, Any]:
     """Trains, benchmarks, and saves the next-stage transition model."""
-    full_data_path = PROJECT_ROOT / data_path
+    if data_path:
+        full_data_path = Path(data_path)
+    else:
+        full_data_path = (
+            BACKEND_DIR / "data" / "deal_transitions.csv"
+            if (BACKEND_DIR / "data" / "deal_transitions.csv").exists()
+            else PROJECT_ROOT / "data" / "deal_transitions.csv"
+        )
+
     if not full_data_path.exists():
-        print(f"[STAGE TRAINING] Dataset not found at {full_data_path}. Generating now...")
-        generate_deal_transitions(n_deals=1200, output_path=data_path)
+        print(f"[STAGE TRAINING] Dataset not found at {full_data_path}.")
+        if generate_deal_transitions:
+            print("[STAGE TRAINING] Generating transitions dataset now...")
+            generate_deal_transitions(n_deals=1200, output_path=str(full_data_path))
+        else:
+            raise FileNotFoundError(f"Transition dataset not found at {full_data_path}")
 
     df = pd.read_csv(full_data_path)
     validate_transition_data(df)
@@ -215,7 +244,7 @@ def train_next_stage_pipeline(
     print(f"\n[BEST MODEL SELECTED] (Winner) {best_name} (Macro F1 = {best_res['macro_f1']})")
 
     # Save best model pipeline
-    out_models_dir = PROJECT_ROOT / models_dir
+    out_models_dir = Path(models_dir) if models_dir else (BACKEND_DIR / "models")
     out_models_dir.mkdir(parents=True, exist_ok=True)
 
     model_save_path = out_models_dir / "next_stage_model.pkl"

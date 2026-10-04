@@ -179,22 +179,49 @@ DealMind/
 │
 ├── backend/
 │   ├── main.py                     # FastAPI application endpoints & routing
-│   ├── requirements.txt            # Python dependencies (UTF-8)
+│   ├── requirements.txt            # Self-contained backend runtime dependencies
 │   ├── .env.example                # Backend environment template
+│   ├── .gitignore                  # Backend Git ignore file
+│   ├── test_groq.py                # Standalone Groq connectivity test
+│   ├── test_hindsight.py           # Standalone Hindsight connectivity test
 │   ├── services/
 │   │   ├── ai_service.py           # Groq LLM integration
 │   │   ├── hindsight_service.py    # Hindsight memory retention & recall
 │   │   ├── prediction_service.py   # Unified ML prediction, SHAP & Groq synthesis
 │   │   └── explainability_service.py# SHAP attribution service
 │   ├── ml/
-│   │   ├── train.py                # Multi-model training harness
-│   │   ├── evaluate.py             # Holdout test set evaluation
-│   │   ├── train_next_stage.py     # Multi-class milestone transition model
+│   │   ├── __init__.py             # ML package initializer
+│   │   ├── data_preprocessing.py   # Feature engineering & ColumnTransformer
+│   │   ├── deal_features.py        # Extracts features from call history
+│   │   ├── stage_models.py         # Multi-class transition architecture & schema
+│   │   ├── explainability.py       # Standalone predictor & attribution helper
 │   │   ├── data_analysis.py        # Dataset statistical insights & chart generation
-│   │   └── model_results.json      # Dynamic benchmark results
-│   └── test_hindsight.py          # Standalone Hindsight connectivity test
+│   │   ├── train.py                # Primary multi-model training pipeline
+│   │   ├── train_next_stage.py     # Multi-class milestone transition model trainer
+│   │   ├── evaluate.py             # Holdout test set evaluation script
+│   │   ├── train_model.py          # Baseline model trainer
+│   │   ├── evaluate_model.py       # Baseline evaluation harness
+│   │   ├── evaluation_results.json # Holdout evaluation results
+│   │   ├── model_results.csv       # Candidate model benchmark table (CSV)
+│   │   └── model_results.json      # Dynamic benchmark results (JSON)
+│   ├── models/
+│   │   ├── deal_prediction_model.pkl # Calibrated production ML pipeline
+│   │   ├── best_model.pkl          # Primary production pipeline alias
+│   │   ├── next_stage_model.pkl    # Multi-class pipeline for next milestone prediction
+│   │   ├── preprocessor.pkl        # Fitted feature preprocessor
+│   │   ├── preprocessing.pkl       # Feature preprocessing pipeline alias
+│   │   ├── metrics.json            # Validated holdout test metrics
+│   │   ├── evaluation_report.json  # Holdout confusion matrix and report
+│   │   ├── next_stage_metadata.json# Next-stage transition metadata
+│   │   ├── next_stage_comparison.json# Next-stage benchmarking comparison
+│   │   ├── feature_importance.json # Top predictive feature weights
+│   │   ├── model_metadata.json     # Model training metadata & split details
+│   │   └── model_comparison.json   # Multi-model benchmarking comparison
+│   └── data/
+│       ├── sales_data.csv          # Historical deals dataset for runtime analytics
+│       ├── mock_calls.json         # Structured customer conversation records
+│       └── deal_transitions.csv    # Sequential interaction transition dataset
 │
-
 ├── frontend/
 │   ├── index.html                  # HTML entry point with metadata
 │   ├── package.json                # Frontend dependencies and npm scripts
@@ -218,24 +245,19 @@ DealMind/
 │           └── AddCallModal.jsx    # Modal for logging new customer calls
 │
 ├── data/
-│   ├── sales_data.csv              # 2,500 enterprise B2B historical sales records
-│   └── mock_calls.json             # Structured customer conversation records
+│   ├── sales_data.csv              # Research dataset for offline exploration/notebooks
+│   ├── deal_transitions.csv        # Sequential transition dataset
+│   ├── generate_dataset.py         # Synthetic dataset generation tool
+│   └── generate_transitions.py     # Sequential stage transition generator
 │
-├── models/
-│   ├── deal_prediction_model.pkl   # Calibrated production ML pipeline
-│   ├── next_stage_model.pkl        # Multi-class pipeline for next milestone prediction
-│   ├── metrics.json                # Validated holdout test metrics
-│   ├── model_comparison.json       # Multi-model benchmarking comparison
-│   └── evaluation_report.json      # Holdout confusion matrix and report
-│
-├── src/
-│   ├── data_preprocessing.py       # Feature engineering & ColumnTransformer
-│   ├── deal_features.py            # Extracts features from call history
-│   ├── explainability.py           # Feature impact calculation
-│   └── train_model.py              # Pipeline training script
+├── notebooks/
+│   └── 01_eda.ipynb                # Exploratory data analysis & 10 business questions
 │
 ├── screenshots/                    # UI screenshots
+├── requirements.txt                # Root Python dependencies
+├── requirements-ml.txt             # ML research dependencies
 ├── README.md                       # Project documentation
+├── .env.example                    # Workspace environment template
 └── .gitignore                      # Git ignore file (excludes .env and venv)
 ```
 
@@ -345,7 +367,12 @@ HINDSIGHT_BANK_ID=dealsight-sales
 
 #### Start Backend Server
 ```powershell
+# Option A: Running from backend directory (standard deployment / Render root)
+cd backend
 uvicorn main:app --reload --port 8001
+
+# Option B: Running from workspace root
+python -m uvicorn backend.main:app --reload --port 8001
 ```
 
 Backend will be available at:

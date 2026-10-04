@@ -37,11 +37,18 @@ for p in [str(PROJECT_ROOT), str(BACKEND_DIR)]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from src.data_preprocessing import (
-    engineer_features,
-    NUMERIC_FEATURES,
-    CATEGORICAL_FEATURES,
-)
+try:
+    from ml.data_preprocessing import (
+        engineer_features,
+        NUMERIC_FEATURES,
+        CATEGORICAL_FEATURES,
+    )
+except ImportError:
+    from backend.ml.data_preprocessing import (
+        engineer_features,
+        NUMERIC_FEATURES,
+        CATEGORICAL_FEATURES,
+    )
 
 # Plain-English translation mapping for technical features
 BUSINESS_FEATURE_LABELS = {
@@ -157,9 +164,16 @@ class ShapExplainabilityService:
     """Computes model-compatible SHAP explanations and translates them into simple sales language."""
 
     def __init__(self, model_file: str = "models/deal_prediction_model.pkl"):
-        model_path = PROJECT_ROOT / model_file
+        model_name = Path(model_file).name
+        model_dir = BACKEND_DIR / "models" if (BACKEND_DIR / "models").exists() else PROJECT_ROOT / "models"
+        model_path = model_dir / model_name
         if not model_path.exists():
-            model_path = PROJECT_ROOT / "models" / "best_model.pkl"
+            model_path = model_dir / "best_model.pkl"
+
+        if not model_path.exists():
+            model_path = PROJECT_ROOT / "models" / model_name
+            if not model_path.exists():
+                model_path = PROJECT_ROOT / "models" / "best_model.pkl"
 
         if not model_path.exists():
             raise FileNotFoundError(f"Model not found at {model_path}. Train model first.")

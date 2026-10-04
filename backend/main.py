@@ -25,10 +25,16 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 try:
-    from src.explainability import get_predictor
-    from src.deal_features import extract_features_from_call_history
-    from ml.data_analysis import analyze_sales_data
-    from services.prediction_service import get_prediction_service
+    try:
+        from ml.explainability import get_predictor
+        from ml.deal_features import extract_features_from_call_history
+        from ml.data_analysis import analyze_sales_data
+        from services.prediction_service import get_prediction_service
+    except ImportError:
+        from backend.ml.explainability import get_predictor
+        from backend.ml.deal_features import extract_features_from_call_history
+        from backend.ml.data_analysis import analyze_sales_data
+        from backend.services.prediction_service import get_prediction_service
 except Exception as _ml_err:
     print(f"[BACKEND WARNING] ML predictor/analysis import notice: {_ml_err}")
     get_predictor = None
@@ -71,9 +77,9 @@ GROQ_MODEL = os.getenv(
 
 
 DATA_FILE_PATH = (
-    PROJECT_ROOT / "data" / "mock_calls.json"
-    if (PROJECT_ROOT / "data" / "mock_calls.json").exists()
-    else BASE_DIR / "data" / "mock_calls.json"
+    BASE_DIR / "data" / "mock_calls.json"
+    if (BASE_DIR / "data" / "mock_calls.json").exists()
+    else PROJECT_ROOT / "data" / "mock_calls.json"
 )
 
 
@@ -1175,8 +1181,9 @@ def get_model_metrics_endpoint():
     """GET /model-metrics: Returns multi-model comparison table, holdout test metrics,
     and confusion matrix.
     """
-    metrics_path = PROJECT_ROOT / "models" / "metrics.json"
-    eval_path = PROJECT_ROOT / "models" / "evaluation_report.json"
+    model_dir = BASE_DIR / "models" if (BASE_DIR / "models").exists() else PROJECT_ROOT / "models"
+    metrics_path = model_dir / "metrics.json"
+    eval_path = model_dir / "evaluation_report.json"
 
     if not metrics_path.exists():
         raise HTTPException(
@@ -1192,12 +1199,12 @@ def get_model_metrics_endpoint():
             eval_data = json.load(f)
             metrics_data["holdout_evaluation"] = eval_data
 
-    next_stage_meta_path = PROJECT_ROOT / "models" / "next_stage_metadata.json"
+    next_stage_meta_path = model_dir / "next_stage_metadata.json"
     if next_stage_meta_path.exists():
         with open(next_stage_meta_path, "r") as f:
             metrics_data["next_stage_model"] = json.load(f)
 
-    next_stage_comp_path = PROJECT_ROOT / "models" / "next_stage_comparison.json"
+    next_stage_comp_path = model_dir / "next_stage_comparison.json"
     if next_stage_comp_path.exists():
         with open(next_stage_comp_path, "r") as f:
             metrics_data["next_stage_comparison"] = json.load(f)
@@ -1208,7 +1215,8 @@ def get_model_metrics_endpoint():
 @app.get("/feature-importance")
 def get_feature_importance_endpoint():
     """GET /feature-importance: Returns top predictive feature weights driving deal progression."""
-    feat_path = PROJECT_ROOT / "models" / "feature_importance.json"
+    model_dir = BASE_DIR / "models" if (BASE_DIR / "models").exists() else PROJECT_ROOT / "models"
+    feat_path = model_dir / "feature_importance.json"
 
     if not feat_path.exists():
         raise HTTPException(

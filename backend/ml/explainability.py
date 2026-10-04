@@ -13,15 +13,26 @@ from typing import Dict, Any, List, Tuple
 from pathlib import Path
 import sys
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BACKEND_DIR.parent
+ML_DIR = Path(__file__).resolve().parent
 
-from src.data_preprocessing import (
-    engineer_features,
-    NUMERIC_FEATURES,
-    CATEGORICAL_FEATURES,
-)
+for p in [str(BACKEND_DIR), str(PROJECT_ROOT)]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+try:
+    from ml.data_preprocessing import (
+        engineer_features,
+        NUMERIC_FEATURES,
+        CATEGORICAL_FEATURES,
+    )
+except ImportError:
+    from backend.ml.data_preprocessing import (
+        engineer_features,
+        NUMERIC_FEATURES,
+        CATEGORICAL_FEATURES,
+    )
 
 STAGES_ORDER = ["Discovery", "Demo", "Evaluation", "Negotiation", "Proposal", "Closed Won"]
 
@@ -59,8 +70,14 @@ class DealPredictor:
 
     def __init__(self, model_path: str = None):
         if not model_path:
-            candidate = PROJECT_ROOT / "models" / "best_model.pkl"
-            model_path = str(candidate) if candidate.exists() else "models/best_model.pkl"
+            candidates = [
+                BACKEND_DIR / "models" / "deal_prediction_model.pkl",
+                BACKEND_DIR / "models" / "best_model.pkl",
+                PROJECT_ROOT / "models" / "deal_prediction_model.pkl",
+                PROJECT_ROOT / "models" / "best_model.pkl",
+            ]
+            found = next((p for p in candidates if p.exists()), None)
+            model_path = str(found) if found else str(BACKEND_DIR / "models" / "deal_prediction_model.pkl")
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model not found at {model_path}. Train model first.")
         self.pipeline = joblib.load(model_path)

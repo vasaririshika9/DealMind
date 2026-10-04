@@ -43,29 +43,50 @@ except Exception as xgb_err:
     print(f"[NOTICE] XGBoost import notice: {xgb_err}. Will use HistGradientBoostingClassifier.")
     HAS_XGBOOST = False
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BACKEND_DIR.parent
+ML_DIR = Path(__file__).resolve().parent
 
-from src.data_preprocessing import (
-    load_and_preprocess_data,
-    NUMERIC_FEATURES,
-    CATEGORICAL_FEATURES,
-    ALL_PREDICTOR_FEATURES,
-)
+for p in [str(BACKEND_DIR), str(PROJECT_ROOT)]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+try:
+    from ml.data_preprocessing import (
+        load_and_preprocess_data,
+        NUMERIC_FEATURES,
+        CATEGORICAL_FEATURES,
+        ALL_PREDICTOR_FEATURES,
+    )
+except ImportError:
+    from backend.ml.data_preprocessing import (
+        load_and_preprocess_data,
+        NUMERIC_FEATURES,
+        CATEGORICAL_FEATURES,
+        ALL_PREDICTOR_FEATURES,
+    )
 
 
 def train_models(
-    data_path: str = "data/sales_data.csv",
-    output_dir: str = "ml",
-    models_dir: str = "models",
+    data_path: str = None,
+    output_dir: str = None,
+    models_dir: str = None,
     random_state: int = 42,
 ) -> Dict[str, Any]:
     """Trains candidate classifiers, compares metrics, and serializes the best model."""
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(models_dir, exist_ok=True)
+    target_models_dir = Path(models_dir) if models_dir else (BACKEND_DIR / "models")
+    target_output_dir = Path(output_dir) if output_dir else ML_DIR
+    target_models_dir.mkdir(parents=True, exist_ok=True)
+    target_output_dir.mkdir(parents=True, exist_ok=True)
 
-    csv_full_path = PROJECT_ROOT / data_path
+    if data_path:
+        csv_full_path = Path(data_path)
+    else:
+        csv_full_path = (
+            BACKEND_DIR / "data" / "sales_data.csv"
+            if (BACKEND_DIR / "data" / "sales_data.csv").exists()
+            else PROJECT_ROOT / "data" / "sales_data.csv"
+        )
     (
         X_train,
         X_val,
@@ -199,19 +220,19 @@ def train_models(
     )
 
     # Save Pipeline and Preprocessor
-    model_save_path = PROJECT_ROOT / models_dir / "deal_prediction_model.pkl"
-    prep_save_path = PROJECT_ROOT / models_dir / "preprocessing.pkl"
+    model_save_path = target_models_dir / "deal_prediction_model.pkl"
+    prep_save_path = target_models_dir / "preprocessing.pkl"
     joblib.dump(full_pipeline, model_save_path)
     joblib.dump(preprocessor, prep_save_path)
 
     # Maintain backwards compatibility aliases
-    joblib.dump(full_pipeline, PROJECT_ROOT / models_dir / "best_model.pkl")
-    joblib.dump(preprocessor, PROJECT_ROOT / models_dir / "preprocessor.pkl")
+    joblib.dump(full_pipeline, target_models_dir / "best_model.pkl")
+    joblib.dump(preprocessor, target_models_dir / "preprocessor.pkl")
 
-    # Save Model Comparison to CSV and JSON in ml/
+    # Save Model Comparison to CSV and JSON in output directory
     results_df = pd.DataFrame(comparison_results)
-    results_csv_path = PROJECT_ROOT / output_dir / "model_results.csv"
-    results_json_path = PROJECT_ROOT / output_dir / "model_results.json"
+    results_csv_path = target_output_dir / "model_results.csv"
+    results_json_path = target_output_dir / "model_results.json"
     results_df.to_csv(results_csv_path, index=False)
 
     with open(results_json_path, "w", encoding="utf-8") as f:
@@ -241,12 +262,12 @@ def train_models(
         },
     }
 
-    metadata_path = PROJECT_ROOT / models_dir / "model_metadata.json"
+    metadata_path = target_models_dir / "model_metadata.json"
     with open(metadata_path, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2)
 
-    # Also update models/metrics.json
-    with open(PROJECT_ROOT / models_dir / "metrics.json", "w", encoding="utf-8") as f:
+    # Also update metrics.json
+    with open(target_models_dir / "metrics.json", "w", encoding="utf-8") as f:
         json.dump({
             "best_model": best_name,
             "metrics": best_entry,
@@ -266,7 +287,7 @@ def train_models(
 
     sorted_importances = sorted(importances_dict.items(), key=lambda x: x[1], reverse=True)
     top_features = [{"feature": k, "importance": v} for k, v in sorted_importances[:15]]
-    with open(PROJECT_ROOT / models_dir / "feature_importance.json", "w", encoding="utf-8") as f:
+    with open(target_models_dir / "feature_importance.json", "w", encoding="utf-8") as f:
         json.dump(top_features, f, indent=2)
 
     print(f"\n[ARTIFACTS] Saved model to: {model_save_path}")

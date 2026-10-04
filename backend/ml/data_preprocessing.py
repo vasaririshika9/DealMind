@@ -165,7 +165,14 @@ def load_and_preprocess_data(
         (X_train, X_val, X_test, y_train, y_val, y_test, fitted_preprocessor)
     """
     if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Sales dataset not found at {file_path}")
+        backend_candidate = Path(__file__).resolve().parent.parent / "data" / "sales_data.csv"
+        root_candidate = Path(__file__).resolve().parent.parent.parent / "data" / "sales_data.csv"
+        if backend_candidate.exists():
+            file_path = str(backend_candidate)
+        elif root_candidate.exists():
+            file_path = str(root_candidate)
+        else:
+            raise FileNotFoundError(f"Sales dataset not found at {file_path}")
 
     raw_df = pd.read_csv(file_path)
 

@@ -32,30 +32,50 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BACKEND_DIR.parent
+ML_DIR = Path(__file__).resolve().parent
 
-from src.data_preprocessing import load_and_preprocess_data
+for p in [str(BACKEND_DIR), str(PROJECT_ROOT)]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+try:
+    from ml.data_preprocessing import load_and_preprocess_data
+except ImportError:
+    from backend.ml.data_preprocessing import load_and_preprocess_data
 
 
 def evaluate_model(
-    model_path: str = "models/deal_prediction_model.pkl",
-    data_path: str = "data/sales_data.csv",
-    output_path: str = "ml/evaluation_results.json",
+    model_path: str = None,
+    data_path: str = None,
+    output_path: str = None,
 ) -> Dict[str, Any]:
     """Evaluates the saved pipeline on the unseen test set and formats plain-English business insights."""
-    full_model_path = PROJECT_ROOT / model_path
+    if model_path:
+        full_model_path = Path(model_path)
+    else:
+        candidate_paths = [
+            BACKEND_DIR / "models" / "deal_prediction_model.pkl",
+            BACKEND_DIR / "models" / "best_model.pkl",
+            PROJECT_ROOT / "models" / "deal_prediction_model.pkl",
+            PROJECT_ROOT / "models" / "best_model.pkl",
+        ]
+        full_model_path = next((p for p in candidate_paths if p.exists()), candidate_paths[0])
+
     if not full_model_path.exists():
-        # Fallback to best_model.pkl if present
-        alt_path = PROJECT_ROOT / "models" / "best_model.pkl"
-        if alt_path.exists():
-            full_model_path = alt_path
-        else:
-            raise FileNotFoundError(f"Model file not found at {full_model_path}. Run ml/train.py first.")
+        raise FileNotFoundError(f"Model file not found at {full_model_path}. Run backend/ml/train.py first.")
 
     pipeline = joblib.load(full_model_path)
-    csv_path = PROJECT_ROOT / data_path
+
+    if data_path:
+        csv_path = Path(data_path)
+    else:
+        csv_path = (
+            BACKEND_DIR / "data" / "sales_data.csv"
+            if (BACKEND_DIR / "data" / "sales_data.csv").exists()
+            else PROJECT_ROOT / "data" / "sales_data.csv"
+        )
     _, _, X_test, _, _, y_test, _ = load_and_preprocess_data(str(csv_path), random_state=42)
 
     # Inferences on holdout test set
@@ -127,13 +147,14 @@ def evaluate_model(
     print(f"  * {business_translations['roc_auc_explanation']}")
     print("=" * 70)
 
-    # Save to ml/evaluation_results.json
-    out_file = PROJECT_ROOT / output_path
+    # Save to evaluation_results.json
+    out_file = Path(output_path) if output_path else (ML_DIR / "evaluation_results.json")
     with open(out_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
 
     # Also update models/evaluation_report.json
-    models_eval_file = PROJECT_ROOT / "models" / "evaluation_report.json"
+    models_dir = BACKEND_DIR / "models" if (BACKEND_DIR / "models").exists() else PROJECT_ROOT / "models"
+    models_eval_file = models_dir / "evaluation_report.json"
     with open(models_eval_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
 

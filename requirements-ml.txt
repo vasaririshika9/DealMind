@@ -5,6 +5,6 @@ scikit-learn
 scipy
 joblib
 matplotlib
-seabor
+seaborn
 xgboost
 shap

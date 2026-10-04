@@ -10,8 +10,13 @@ import numpy as np
 from pathlib import Path
 from typing import Dict, Any, List
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_PATH = PROJECT_ROOT / "data" / "sales_data.csv"
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BACKEND_DIR.parent
+DATA_PATH = (
+    BACKEND_DIR / "data" / "sales_data.csv"
+    if (BACKEND_DIR / "data" / "sales_data.csv").exists()
+    else PROJECT_ROOT / "data" / "sales_data.csv"
+)
 
 
 def analyze_sales_data(file_path: str = None) -> Dict[str, Any]:
@@ -259,7 +264,11 @@ def analyze_sales_data(file_path: str = None) -> Dict[str, Any]:
     }
 
     # 5. Historical Transition Dataset (Sequential interactions & observed transitions)
-    transitions_path = PROJECT_ROOT / "data" / "deal_transitions.csv"
+    transitions_path = (
+        BACKEND_DIR / "data" / "deal_transitions.csv"
+        if (BACKEND_DIR / "data" / "deal_transitions.csv").exists()
+        else PROJECT_ROOT / "data" / "deal_transitions.csv"
+    )
     transition_data = None
     if transitions_path.exists():
         tdf = pd.read_csv(transitions_path)

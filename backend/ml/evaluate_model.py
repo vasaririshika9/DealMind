@@ -22,16 +22,37 @@ from sklearn.metrics import (
 import sys
 from pathlib import Path
 
-# Add project root to sys.path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+# Add paths to sys.path
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = BACKEND_DIR.parent
+for p in [str(BACKEND_DIR), str(PROJECT_ROOT)]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
-from src.data_preprocessing import load_and_preprocess_data
+try:
+    from ml.data_preprocessing import load_and_preprocess_data
+except ImportError:
+    from backend.ml.data_preprocessing import load_and_preprocess_data
 
 
-def evaluate_best_model(model_path: str = "models/best_model.pkl", data_path: str = "data/sales_data.csv"):
+def evaluate_best_model(model_path: str = None, data_path: str = None):
     """Evaluates the saved pipeline on the holdout test set."""
+    if not model_path:
+        candidates = [
+            BACKEND_DIR / "models" / "deal_prediction_model.pkl",
+            BACKEND_DIR / "models" / "best_model.pkl",
+            PROJECT_ROOT / "models" / "deal_prediction_model.pkl",
+            PROJECT_ROOT / "models" / "best_model.pkl",
+        ]
+        found = next((p for p in candidates if p.exists()), None)
+        model_path = str(found) if found else str(BACKEND_DIR / "models" / "deal_prediction_model.pkl")
+
+    if not data_path:
+        data_path = str(
+            BACKEND_DIR / "data" / "sales_data.csv"
+            if (BACKEND_DIR / "data" / "sales_data.csv").exists()
+            else PROJECT_ROOT / "data" / "sales_data.csv"
+        )
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Model file not found at {model_path}. Run src/train_model.py first.")
 
@@ -91,7 +112,8 @@ def evaluate_best_model(model_path: str = "models/best_model.pkl", data_path: st
     print(report["business_summary"])
     print("=" * 65)
 
-    with open("models/evaluation_report.json", "w") as f:
+    target_save_path = BACKEND_DIR / "models" / "evaluation_report.json"
+    with open(target_save_path, "w") as f:
         json.dump(report, f, indent=2)
 
     return report

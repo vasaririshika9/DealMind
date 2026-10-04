@@ -39,11 +39,18 @@ for p in [str(PROJECT_ROOT), str(BACKEND_DIR)]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
-from src.data_preprocessing import (
-    engineer_features,
-    NUMERIC_FEATURES,
-    CATEGORICAL_FEATURES,
-)
+try:
+    from ml.data_preprocessing import (
+        engineer_features,
+        NUMERIC_FEATURES,
+        CATEGORICAL_FEATURES,
+    )
+except ImportError:
+    from backend.ml.data_preprocessing import (
+        engineer_features,
+        NUMERIC_FEATURES,
+        CATEGORICAL_FEATURES,
+    )
 from services.explainability_service import get_explainability_service
 
 
@@ -55,13 +62,22 @@ class PredictionService:
         model_file: str = "models/deal_prediction_model.pkl",
         next_stage_file: str = "models/next_stage_model.pkl",
     ):
-        self.model_path = PROJECT_ROOT / model_file
+        model_name = Path(model_file).name
+        next_stage_name = Path(next_stage_file).name
+        model_dir = BACKEND_DIR / "models" if (BACKEND_DIR / "models").exists() else PROJECT_ROOT / "models"
+
+        self.model_path = model_dir / model_name
         if not self.model_path.exists():
-            self.model_path = PROJECT_ROOT / "models" / "best_model.pkl"
+            self.model_path = model_dir / "best_model.pkl"
+
+        if not self.model_path.exists():
+            self.model_path = PROJECT_ROOT / "models" / model_name
+            if not self.model_path.exists():
+                self.model_path = PROJECT_ROOT / "models" / "best_model.pkl"
 
         if not self.model_path.exists():
             raise FileNotFoundError(
-                f"Model file not found at {self.model_path}. Please run ml/train.py first."
+                f"Model file not found at {self.model_path}. Please run backend/ml/train.py first."
             )
 
         print(f"[PREDICTION SERVICE] Loading primary model from: {self.model_path}")
@@ -70,7 +86,10 @@ class PredictionService:
         self.classifier = self.pipeline.named_steps["classifier"]
 
         # Load Next-Stage Transition Model
-        self.next_stage_path = PROJECT_ROOT / next_stage_file
+        self.next_stage_path = model_dir / next_stage_name
+        if not self.next_stage_path.exists():
+            self.next_stage_path = PROJECT_ROOT / "models" / next_stage_name
+
         self.next_stage_pipeline = None
         if self.next_stage_path.exists():
             try:
